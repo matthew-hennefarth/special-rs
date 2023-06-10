@@ -1,9 +1,12 @@
-use num_traits::{FromPrimitive, ToPrimitive, Zero};
+use num_traits::{FromPrimitive, One, PrimInt, ToPrimitive, Zero};
 use std::ops;
 
+const MAX_MULTIPLICATIONS: usize = 16;
+
 pub trait Factorial<Output = Self> {
-    fn factorial2(&self) -> Self;
     fn factorial(&self) -> Self;
+    fn factorial2(&self) -> Self;
+    fn factorialk(&self, k: usize) -> Self;
 }
 
 impl<T> Factorial<T> for T
@@ -11,14 +14,31 @@ where
     T: Copy
         + FromPrimitive
         + ToPrimitive
+        + PrimInt
         + PartialOrd
         + Zero
+        + One
         + ops::Sub<Output = T>
         + ops::Mul<Output = T>,
 {
+    fn factorial(&self) -> Self {
+        assert!(*self >= T::zero());
+        const CACHE_SIZE: usize = MAX_MULTIPLICATIONS + 1;
+        const FACTORIAL_CACHE: [usize; CACHE_SIZE] = [
+            1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628000, 39916800, 479001600,
+            6227020800, 87178291200, 1307674368000, 20922789888000,
+        ];
+        if *self < T::from_usize(CACHE_SIZE).unwrap() {
+            return T::from_usize(FACTORIAL_CACHE[T::to_usize(self).unwrap()]).unwrap();
+        }
+
+        partial_product(*self - T::from_usize(CACHE_SIZE - 1).unwrap(), *self, 1)
+            * Self::factorial(&(*self - T::from_usize(CACHE_SIZE).unwrap()))
+    }
+
     fn factorial2(&self) -> Self {
         assert!(*self >= T::zero());
-        const CACHE_SIZE: usize = 33;
+        const CACHE_SIZE: usize = 2 * MAX_MULTIPLICATIONS + 1;
         const FACTORIAL2_CACHE: [usize; CACHE_SIZE] = [
             1, 1, 2, 3, 8, 15, 48, 105, 384, 945, 3840, 10395, 46080, 135135, 645120, 2027025,
             10321920, 34459425, 185794560, 654729075, 3715891200, 13749310575, 81749606400,
@@ -33,19 +53,28 @@ where
             * Self::factorial2(&(*self - T::from_usize(CACHE_SIZE).unwrap()))
     }
 
-    fn factorial(&self) -> Self {
+    fn factorialk(&self, k: usize) -> Self {
+        assert!(k > 0);
         assert!(*self >= T::zero());
-        const CACHE_SIZE: usize = 17;
-        const FACTORIAL_CACHE: [usize; CACHE_SIZE] = [
-            1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628000, 39916800, 479001600,
-            6227020800, 87178291200, 1307674368000, 20922789888000,
-        ];
-        if *self < T::from_usize(CACHE_SIZE).unwrap() {
-            return T::from_usize(FACTORIAL_CACHE[T::to_usize(self).unwrap()]).unwrap();
+        if *self == Self::zero() {
+            return Self::one();
         }
 
-        partial_product(*self - T::from_usize(CACHE_SIZE - 1).unwrap(), *self, 1)
-            * Self::factorial(&(*self - T::from_usize(CACHE_SIZE).unwrap()))
+        let max_window = T::from_usize(k * MAX_MULTIPLICATIONS).unwrap();
+
+        if *self > max_window {
+            partial_product(*self - max_window, *self, k)
+                * Self::factorialk(&(*self - max_window - Self::one()), k)
+        } else {
+            let k_as_t = T::from(k).unwrap();
+            let window = k_as_t * (*self / k_as_t);
+            let window = if window == *self {
+                window - k_as_t
+            } else {
+                window
+            };
+            partial_product(*self - window, *self, k)
+        }
     }
 }
 
@@ -54,7 +83,7 @@ fn partial_product<T>(start: T, stop: T, step: usize) -> T
 where
     T: Copy + PartialOrd + FromPrimitive + ToPrimitive,
 {
-    assert!(start < stop);
+    assert!(start <= stop);
     T::from_usize(
         (T::to_usize(&start).unwrap()..T::to_usize(&stop).unwrap() + 1)
             .step_by(step)
@@ -113,5 +142,49 @@ mod tests {
         assert_eq!(13_i64.factorial2(), 135_135); // Taken from WolframAlpha
         assert_eq!(22_i64.factorial2(), 81_749_606_400); // Taken from WolframAlpha
         assert_eq!(23_i64.factorial2(), 316_234_143_225); // Taken from WolframAlpha
+    }
+
+    #[test]
+    fn test_factorial1() {
+        let k = 1;
+        for i in 0..10 {
+            assert_eq!(i.factorialk(k), i.factorial());
+        }
+    }
+
+    #[test]
+    fn test_factorial2() {
+        let k = 2;
+        for i in 0..15 {
+            assert_eq!(i.factorialk(k), i.factorial2());
+        }
+    }
+
+    #[test]
+    fn test_factorial3() {
+        let k = 3;
+        assert_eq!(0.factorialk(k), 1);
+        for i in 1..k {
+            assert_eq!(i.factorialk(k), i);
+        }
+        assert_eq!(3.factorialk(k), 3);
+        assert_eq!(4.factorialk(k), 4);
+        assert_eq!(5.factorialk(k), 10);
+        assert_eq!(6.factorialk(k), 18);
+        assert_eq!(7.factorialk(k), 28);
+    }
+
+    #[test]
+    fn test_factorial4() {
+        let k = 4;
+        assert_eq!(0.factorialk(k), 1);
+        for i in 1..k {
+            assert_eq!(i.factorialk(k), i);
+        }
+        assert_eq!(4.factorialk(k), 4);
+        assert_eq!(5.factorialk(k), 5);
+        assert_eq!(6.factorialk(k), 12);
+        assert_eq!(7.factorialk(k), 21);
+        assert_eq!(8.factorialk(k), 32);
     }
 }
