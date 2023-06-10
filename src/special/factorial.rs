@@ -3,8 +3,41 @@ use std::ops;
 
 const MAX_MULTIPLICATIONS: usize = 16;
 
+/// Defines the `factorial`, `factorial2`, and `factorialk` functions for `Self`. Implemented for
+/// primitive integer types (usize and isize).
 pub trait Factorial<Output = Self> {
+    /// # Factorial function
+    /// The factorial function is defined as the product of all positive integers less than or equal
+    /// to $n$.
+    /// $$
+    /// n! = n (n-1) (n-2) \times \ldots \times 1
+    /// $$
+    /// Additionally we have that $0!=1$.
+    ///
+    /// ## Examples
+    /// ```
+    /// # use sci_rs::special::Factorial;
+    /// assert!(0.factorial(), 1);
+    /// assert!(1.factorial(), 1);
+    /// assert!(2.factorial(), 2);
+    /// assert!(3.factorial(), 6);
+    /// ```
     fn factorial(&self) -> Self;
+
+    /// # Factorial2 function
+    /// The double factorial $n!!$ is defined as the product of all positive integers up to $n$ that have the same parity as $n$.
+    /// $$
+    /// n!! = n (n-2) (n-4) \times \ldots
+    /// $$
+    /// In the case that $n$ is even ($n = 2k$), then
+    /// $$
+    /// (2k)!! = (2k)(2k-2)(2k-4)\ldots(4)(2)
+    /// $$
+    /// In the case that $n$ is odd ($n=2k+1$), then
+    /// $$
+    /// (2k+1)!! = (2k+1)(2k-1)(2k-3)\ldots(3)(1)
+    /// $$
+    /// Additionally we have that $0!!=1$.
     fn factorial2(&self) -> Self;
     fn factorialk(&self, k: usize) -> Self;
 }
