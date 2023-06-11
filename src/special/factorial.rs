@@ -15,7 +15,7 @@ const MAX_MULTIPLICATIONS: usize = 16;
 /// which does not rely on checked operations for increased speed at the
 /// risk of panicking. For other types which satisfy the Factorial type,
 /// the un-checked methods simply unwrap the checked results.
-pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
+pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// The factorial function is defined as the product of all positive integers less than or equal
     /// to $n$.
     /// $$
@@ -43,7 +43,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// # Negative Values
     /// To avoid panicking, and to be consistent with Scipy, if provided
     /// a negative number, `0` is returned.
-    fn factorial(&self) -> Self {
+    fn factorial(self) -> Self {
         self.checked_factorial().unwrap()
     }
 
@@ -56,7 +56,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// assert_eq!(2_u8.checked_factorial(), Some(2));
     /// assert_eq!(10_u8.checked_factorial(), None); // 10! overflows a u8
     /// ```
-    fn checked_factorial(&self) -> Option<Self>;
+    fn checked_factorial(self) -> Option<Self>;
 
     /// The double factorial $n!!$ is defined as the product of all positive integers up to $n$ that have the same parity as $n$.
     /// $$
@@ -93,7 +93,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// # Negative Values
     /// To avoid panicking, and to be consistent with Scipy, if provided
     /// a negative number, `0` is returned.
-    fn factorial2(&self) -> Self {
+    fn factorial2(self) -> Self {
         self.checked_factorial2().unwrap()
     }
 
@@ -107,7 +107,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// assert_eq!(5_u8.checked_factorial2(), Some(15));
     /// assert_eq!(33_u8.checked_factorial2(), None); // 33!! overflows a u8
     /// ```
-    fn checked_factorial2(&self) -> Option<Self>;
+    fn checked_factorial2(self) -> Option<Self>;
 
     /// Generalized $k$-factorial.
     ///
@@ -136,7 +136,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// # Negative Values
     /// To avoid panicking, and to be consistent with Scipy, if provided
     /// a negative number, `0` is returned.
-    fn factorialk(&self, k: Self) -> Self {
+    fn factorialk(self, k: Self) -> Self {
         self.checked_factorialk(k).unwrap()
     }
 
@@ -150,7 +150,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// assert_eq!(10_u8.checked_factorialk(4), Some(120));
     /// assert_eq!(31_u8.checked_factorialk(3), None); // 33!! overflows a u8
     /// ```
-    fn checked_factorialk(&self, k: Self) -> Option<Self>;
+    fn checked_factorialk(self, k: Self) -> Option<Self>;
 }
 
 // Cached factorial and factorial2 values
@@ -171,99 +171,100 @@ const FACTORIAL2_CACHE: [u64; FACTORIAL2_CACHE_LEN] = [
 macro_rules! factorial_primint_impl {
     ($($T: ty)*) => ($(
         impl Factorial for $T {
-            fn factorial(&self) -> Self {
+            fn factorial(self) -> Self {
                 if self.is_negative() {
                     return 0;
                 }
                 let cache_as_type = FACTORIAL_CACHE_LEN as $T;
-                if *self < cache_as_type {
-                    return FACTORIAL_CACHE[*self as usize].try_into().unwrap();
+                if self < cache_as_type {
+                    return FACTORIAL_CACHE[self as usize].try_into().unwrap();
                 }
-                partial_product(*self - (cache_as_type - 1), *self, 1) * (*self - cache_as_type).factorial()
+                partial_product(self - (cache_as_type - 1), self, 1) * (self - cache_as_type).factorial()
             }
 
-            fn checked_factorial(&self) -> Option<Self> {
+            fn checked_factorial(self) -> Option<Self> {
                 if self.is_negative() {
                     return Some(0);
                 }
                 let cache_as_type = FACTORIAL_CACHE_LEN as $T;
-                if *self < cache_as_type {
-                    return FACTORIAL_CACHE[*self as usize].try_into().ok();
+                if self < cache_as_type {
+                    return FACTORIAL_CACHE[self as usize].try_into().ok();
                 }
-                (checked_partial_product(*self - (cache_as_type - 1), *self, 1)?)
-                    .checked_mul(Self::checked_factorial(&(*self - cache_as_type))?)
+                (checked_partial_product(self - (cache_as_type - 1), self, 1)?).checked_mul(
+                    (self - cache_as_type).checked_factorial()?)
             }
 
-            fn factorial2(&self) -> Self {
+            fn factorial2(self) -> Self {
                 if self.is_negative() {
                     return 0;
                 }
                 let cache_as_type = FACTORIAL2_CACHE_LEN as $T;
-                if *self < cache_as_type {
-                    return FACTORIAL2_CACHE[*self as usize].try_into().unwrap();
+                if self < cache_as_type {
+                    return FACTORIAL2_CACHE[self as usize].try_into().unwrap();
                 }
-                partial_product(*self - (cache_as_type - 1), *self, 2) * (*self - cache_as_type).factorial2()
+                partial_product(self - (cache_as_type - 1), self, 2) * (self - cache_as_type).factorial2()
             }
 
-            fn checked_factorial2(&self) -> Option<Self> {
+            fn checked_factorial2(self) -> Option<Self> {
                 if self.is_negative() {
                     return Some(0);
                 }
                 let cache_as_type = FACTORIAL2_CACHE_LEN as $T;
-                if *self < cache_as_type {
-                    return FACTORIAL2_CACHE[*self as usize].try_into().ok();
+                if self < cache_as_type {
+                    return FACTORIAL2_CACHE[self as usize].try_into().ok();
                 }
-                (checked_partial_product(*self - (cache_as_type - 1), *self, 2)?).checked_mul(
-                    Self::factorial2(&(*self - cache_as_type)))
+                (checked_partial_product(self - (cache_as_type - 1), self, 2)?).checked_mul(
+                    (self - cache_as_type).factorial2())
             }
 
-            fn factorialk(&self, k: Self) -> Self {
+            fn factorialk(self, k: Self) -> Self {
                 if self.is_negative() {
                     return 0;
                 }
                 assert!(k > 0);
-                if *self == 0 {
+                if self == 0 {
                     return 1;
                 }
                 let max_window = k * MAX_MULTIPLICATIONS as $T;
 
-                if *self > max_window {
-                    return partial_product(*self - max_window, *self, k) * (*self - max_window - 1).factorialk(k);
+                if self > max_window {
+                    return partial_product(self - max_window, self, k) * (self - max_window - 1).factorialk(k);
                 }
 
                 let k_as_t = k as $T;
-                let window = k_as_t * (*self / k_as_t);
-                let window = if window == *self {
+                let window = k_as_t * (self / k_as_t);
+                let window = if window == self {
                     window - k_as_t
                 } else {
                     window
                 };
-                partial_product(*self - window, *self, k)
+                partial_product(self - window, self, k)
 
             }
 
-            fn checked_factorialk(&self, k: $T) -> Option<Self> {
+            fn checked_factorialk(self, k: $T) -> Option<Self> {
                 if self.is_negative() {
                     return Some(0);
                 }
                 assert!(k > 0);
-                if *self == 0 {
+                if self == 0 {
                     return Some(1);
                 }
 
                 let max_window = k.checked_mul(MAX_MULTIPLICATIONS as $T)?;
 
-                if *self > max_window {
-                    return (checked_partial_product(*self - max_window, *self, k)?).checked_mul(Self::checked_factorialk(&(*self - max_window - 1), k)?)
+                if self > max_window {
+                    return (checked_partial_product(self - max_window, self, k)?).checked_mul(
+                        (self - max_window - 1).checked_factorialk(k)?);
                 }
                 let k_as_t = k as $T;
-                let window = k_as_t * (*self / k_as_t);
-                let window = if window == *self {
+                let window = k_as_t * (self / k_as_t);
+                let window = if window == self {
                     window - k_as_t
                 } else {
                     window
                 };
-                checked_partial_product(*self - window, *self, k)
+                checked_partial_product(self - window, self, k)
             }
         }
     )*)
