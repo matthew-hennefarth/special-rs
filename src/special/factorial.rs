@@ -1,6 +1,5 @@
 use num_traits::{CheckedAdd, CheckedMul, FromPrimitive, One, ToPrimitive};
 
-
 /// Number of multiplications to perform at once.
 /// This number should be optimized to do the most amount of multiplications in a single CPU
 const MAX_MULTIPLICATIONS: usize = 16;
@@ -9,11 +8,13 @@ const MAX_MULTIPLICATIONS: usize = 16;
 /// for `Self`. Implemented for primitive integer types (usize, isize,
 /// etc).
 ///
-/// # Implementation for Primitive Integers
-// For primitive integer types, a different implementation is
-// provided which does not rely on checked operations for increased
-// speed at the risk of panicking.
-pub trait Factorial: Sized + CheckedMul {
+/// ## Implementation for Primitive Integers
+/// For primitive integer types, a different implementation is
+/// provided for the regular `factorial`, `factorial2`, and `factorialk`
+/// which does not rely on checked operations for increased speed at the
+/// risk of panicking. For other types which satisfy the Factorial type,
+/// the un-checked methods simply unwrap the checked results.
+pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// The factorial function is defined as the product of all positive integers less than or equal
     /// to $n$.
     /// $$
@@ -88,6 +89,16 @@ pub trait Factorial: Sized + CheckedMul {
         self.checked_factorial2().unwrap()
     }
 
+    /// Checked version of the `factorial2` function which catches overflow.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Factorial;
+    ///
+    /// assert_eq!(2_u8.checked_factorial2(), Some(2));
+    /// assert_eq!(5_u8.checked_factorial2(), Some(15));
+    /// assert_eq!(33_u8.checked_factorial2(), None); // 33!! overflows a u8
+    /// ```
     fn checked_factorial2(&self) -> Option<Self>;
 
     /// Generalized $k$-factorial.
@@ -118,17 +129,27 @@ pub trait Factorial: Sized + CheckedMul {
         self.checked_factorialk(k).unwrap()
     }
 
+    /// Checked version of the `factorialk` function which catches overflow.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Factorial;
+    ///
+    /// assert_eq!(2_u8.checked_factorialk(2), Some(2));
+    /// assert_eq!(10_u8.checked_factorialk(4), Some(120));
+    /// assert_eq!(31_u8.checked_factorialk(3), None); // 33!! overflows a u8
+    /// ```
     fn checked_factorialk(&self, k: Self) -> Option<Self>;
 }
 
+// Cached factorial and factorial2 values
 const FACTORIAL_CACHE_LEN: usize = MAX_MULTIPLICATIONS + 1;
-const FACTORIAL2_CACHE_LEN: usize = 2 * MAX_MULTIPLICATIONS + 1;
-
 const FACTORIAL_CACHE: [u64; FACTORIAL_CACHE_LEN] = [
     1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628000, 39916800, 479001600, 6227020800,
     87178291200, 1307674368000, 20922789888000,
 ];
 
+const FACTORIAL2_CACHE_LEN: usize = 2 * MAX_MULTIPLICATIONS + 1;
 const FACTORIAL2_CACHE: [u64; FACTORIAL2_CACHE_LEN] = [
     1, 1, 2, 3, 8, 15, 48, 105, 384, 945, 3840, 10395, 46080, 135135, 645120, 2027025, 10321920,
     34459425, 185794560, 654729075, 3715891200, 13749310575, 81749606400, 316234143225,
@@ -136,11 +157,40 @@ const FACTORIAL2_CACHE: [u64; FACTORIAL2_CACHE_LEN] = [
     6190283353629375, 42849873690624000, 191898783962510625, 1371195958099968000,
 ];
 
+// Can change this to do something else I think if I want -1, -2 => 0 like in scipy.
+// Right now it should panic I believe.
+trait CheckNegatives {
+    fn internal_assert(&self);
+}
+
+macro_rules! impl_checknegatives_signed {
+    ($($T: ty)*) => ($(
+        impl CheckNegatives for $T {
+            #[inline(always)]
+            fn internal_assert(&self) {
+                assert!(*self >= 0, "A factorial function called with a negative number");
+            }
+        }
+)*)
+}
+
+macro_rules! impl_checknegatives_unsigned {
+    ($($T: ty)*) => ($(
+        impl CheckNegatives for $T {
+            #[inline(always)]
+            fn internal_assert(&self) {}
+        }
+)*)
+}
+
+impl_checknegatives_signed! {i8 i16 i32 i64 isize}
+impl_checknegatives_unsigned! {u8 u16 u32 u64 usize}
+
 macro_rules! factorial_primint_impl {
     ($($T: ty)*) => ($(
         impl Factorial for $T {
             fn factorial(&self) -> Self {
-                debug_assert!(*self >= 0);
+                self.internal_assert();
                 let cache_as_type = FACTORIAL_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL_CACHE[*self as usize].try_into().unwrap();
@@ -149,7 +199,7 @@ macro_rules! factorial_primint_impl {
             }
 
             fn checked_factorial(&self) -> Option<Self> {
-                debug_assert!(*self >= 0);
+                self.internal_assert();
                 let cache_as_type = FACTORIAL_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL_CACHE[*self as usize].try_into().ok();
@@ -159,7 +209,7 @@ macro_rules! factorial_primint_impl {
             }
 
             fn factorial2(&self) -> Self {
-                debug_assert!(*self >= 0);
+                self.internal_assert();
                 let cache_as_type = FACTORIAL2_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL2_CACHE[*self as usize].try_into().unwrap();
@@ -168,17 +218,18 @@ macro_rules! factorial_primint_impl {
             }
 
             fn checked_factorial2(&self) -> Option<Self> {
-                debug_assert!(*self >= 0);
+                self.internal_assert();
                 let cache_as_type = FACTORIAL2_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL2_CACHE[*self as usize].try_into().ok();
                 }
-                (checked_partial_product(*self - cache_as_type - 1, *self, 2)?).checked_mul(
+                (checked_partial_product(*self - (cache_as_type - 1), *self, 2)?).checked_mul(
                     Self::factorial2(&(*self - cache_as_type)))
             }
 
             fn factorialk(&self, k: Self) -> Self {
-                debug_assert!(*self >= 0);
+                self.internal_assert();
+                assert!(k > 0);
                 if *self == 0 {
                     return 1;
                 }
@@ -200,8 +251,8 @@ macro_rules! factorial_primint_impl {
             }
 
             fn checked_factorialk(&self, k: $T) -> Option<Self> {
-                debug_assert!(k > 0);
-                debug_assert!(*self >= 0);
+                self.internal_assert();
+                assert!(k > 0);
                 if *self == 0 {
                     return Some(1);
                 }
@@ -219,16 +270,24 @@ macro_rules! factorial_primint_impl {
                     window
                 };
                 checked_partial_product(*self - window, *self, k)
-
             }
         }
     )*)
 }
 
-factorial_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
+factorial_primint_impl! {u8 u16 u32 u64 usize}
+factorial_primint_impl! {i8 i16 i32 i64 isize}
 #[cfg(has_i128)]
 factorial_primint_impl! {u128 i128}
 
+/// Computes the checked product between `start` and `stop` stepping
+/// with `step`. Catches overflow from multiplication or addition
+///
+/// $$
+/// n_0\times n_1\times\ldots \times n_k
+/// $$
+/// where $n_0 = $ `start`, $n_{i+1} = \text{step}\times n_i$, and $n_k$
+/// is the largest value such that $n_k < $ `stop + 1`./
 #[inline(always)]
 fn checked_partial_product<T>(mut start: T, stop: T, step: T) -> Option<T>
 where
@@ -242,7 +301,7 @@ where
     result
 }
 
-// Computes the product between `start` and `stop` stepping with `step`.
+/// Computes the product between `start` and `stop` stepping with `step`.
 ///
 /// $$
 /// n_0\times n_1\times\ldots \times n_k
@@ -254,6 +313,7 @@ fn partial_product<T>(start: T, stop: T, step: T) -> T
 where
     T: PartialOrd + FromPrimitive + ToPrimitive,
 {
+    assert!(start <= stop);
     T::from_isize(
         (start.to_isize().unwrap()..stop.to_isize().unwrap() + 1)
             .step_by(step.to_usize().unwrap())
@@ -313,6 +373,7 @@ mod tests {
         assert_eq!(5_u8.checked_factorial2(), Some(15));
         assert_eq!(7_u8.checked_factorial2(), Some(105));
         assert_eq!(8_u8.checked_factorial2(), None);
+        assert_eq!(33_u8.checked_factorial2(), None);
     }
 
     #[test]
