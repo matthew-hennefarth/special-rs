@@ -2,8 +2,11 @@ use crate::special::IsNegative;
 use num_traits::{CheckedAdd, CheckedMul};
 use std::cmp::min;
 
-/// Defined the `comb` function for `Self`. Implemented for primitive
-/// integer types.
+/// Various combinatorics functions for integer-types.
+///
+/// Defined the `choose` and `perm` function for `Self`. Implemented for
+/// primitive integer types.These functions are useful in a variety of mathematical and
+/// statistical settings. Checked versions are also provided to prevent panicking from overflowing during the multiplication.
 pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// The number of combinations of $n$ taken $k$ at a time.
     ///
@@ -62,7 +65,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// ```
     ///
     /// ## Notes
-    /// When $n$ < 0 or $k<0$ or $n<k$, the $0$ is returned.
+    /// When $n$ < 0 or $k<0$ or $n<k$, then $0$ is returned.
     fn choose_rep(self, k: Self) -> Self {
         self.checked_choose_rep(k).unwrap()
     }
@@ -77,6 +80,36 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(12_u8.checked_choose_rep(3), None); // Overflows a u8
     /// ```
     fn checked_choose_rep(self, k: Self) -> Option<Self>;
+
+    /// Number of permutations of $n$ things taken $k$ at a time.
+    ///
+    /// Also known as the $k$-permutations of $n$.
+    /// $$
+    /// \text{Perm}(n, k) = \frac{n!}{(n-k)!}
+    /// $$
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Combinatorics;
+    /// assert_eq!(5.perm(5), 120); // should be 5!
+    /// assert_eq!(5.perm(0), 1);
+    /// assert_eq!(6.perm(3), 6*5*4);
+    /// ```
+    ///
+    /// ## Notes
+    /// When $n$ < 0 or $k<0$, then $0$ is returned.
+    fn perm(self, k: Self) -> Self {
+        self.checked_perm(k).unwrap()
+    }
+
+    /// Checked version of `perm` to prevent overflow panics.
+    ///
+    /// # Examples
+    ///```
+    /// use sci_rs::special::Combinatorics;
+    /// assert_eq!(154.checked_perm(154), None); //Should overflow since 154!
+    /// assert_eq!(4.checked_perm(3), Some(4*3*2*1));
+    /// ```
+    fn checked_perm(self, k: Self) -> Option<Self>;
 }
 
 macro_rules! combinatorics_primint_impl {
@@ -114,6 +147,32 @@ macro_rules! combinatorics_primint_impl {
             fn checked_choose_rep(self, k: Self) -> Option<Self> {
                 self.checked_add(k)?.checked_sub(1)?.checked_choose(k)
             }
+
+            fn perm(self, k: Self) -> Self {
+                if k > self || self.is_negative() || k.is_negative() {
+                    return 0;
+                }
+
+                let start = self - k + 1;
+                let end = self + 1;
+                (start..end).fold(1, |result, val| result * val)
+            }
+
+            fn checked_perm(self, k: Self) -> Option<Self> {
+                if k > self || self.is_negative() || k.is_negative() {
+                    return Some(0);
+                }
+
+                let start = (self - k).checked_add(1)?;
+                let end = self.checked_add(1)?;
+
+                let mut result = 1;
+                for i in start..end {
+                    result = result.checked_mul(&i)?;
+                }
+                Some(result)
+            }
+
         }
     )*)
 }
@@ -127,6 +186,21 @@ mod tests {
     use super::*;
     use num_traits::FromPrimitive;
 
+    fn check_values<T>(
+        x: T,
+        ref_values: &[T],
+        func: fn(T, T) -> T,
+        checked_func: fn(T, T) -> Option<T>,
+    ) where
+        T: Sized + Combinatorics + PartialEq + std::fmt::Debug + FromPrimitive + Copy,
+    {
+        for (i, &val) in ref_values.iter().enumerate() {
+            let i = T::from_usize(i).unwrap();
+            assert_eq!(func(x, i), val);
+            assert_eq!(checked_func(x, i), Some(val));
+        }
+    }
+
     #[test]
     fn choose() {
         assert_eq!(3_u8.choose(1), 3);
@@ -137,25 +211,14 @@ mod tests {
         assert_eq!(3_u8.checked_choose(3), Some(3_u8.choose(3)));
         assert_eq!(10_u8.checked_choose(5), None);
 
-        fn check_values<T>(x: T, ref_values: &[T])
-        where
-            T: Combinatorics + PartialEq + std::fmt::Debug + FromPrimitive + Copy,
-        {
-            for (i, &val) in ref_values.iter().enumerate() {
-                let i = T::from_usize(i).unwrap();
-                assert_eq!(x.choose(i), val);
-                assert_eq!(x.checked_choose(i as T), Some(val));
-            }
-        }
-
         let ref_values_5 = [1, 5, 10, 10, 5, 1, 0];
         let ref_values_10 = [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1, 0];
         let ref_values_15 = [
             1, 15, 105, 455, 1365, 3003, 5005, 6435, 6435, 5005, 3003, 1365, 455, 105, 15, 1,
         ];
-        check_values(5, &ref_values_5);
-        check_values(10, &ref_values_10);
-        check_values(15, &ref_values_15);
+        check_values(5, &ref_values_5, i32::choose, i32::checked_choose);
+        check_values(10, &ref_values_10, i32::choose, i32::checked_choose);
+        check_values(15, &ref_values_15, i32::choose, i32::checked_choose);
     }
 
     #[test]
@@ -189,25 +252,53 @@ mod tests {
         assert_eq!(0.choose_rep(1), 0);
         assert_eq!(1.choose_rep(1), 1);
 
-        fn check_values<T>(x: T, ref_values: &[T])
-        where
-            T: Combinatorics + PartialEq + std::fmt::Debug + FromPrimitive + Copy,
-        {
-            for (i, &val) in ref_values.iter().enumerate() {
-                let i = T::from_usize(i).unwrap();
-                assert_eq!(x.choose_rep(i), val);
-                assert_eq!(x.checked_choose_rep(i as T), Some(val));
-            }
-        }
-
         let ref_values_5 = [1, 5, 15, 35, 70, 126, 210, 330, 495, 715];
         let ref_values_7 = [1, 7, 28, 84, 210, 462, 924, 1716, 3003, 5005];
         let ref_values_10 = [
             1, 10, 55, 220, 715, 2002, 5005, 11440, 24310, 48620, 92378, 167960, 293930, 497420,
             817190,
         ];
-        check_values(5, &ref_values_5);
-        check_values(7, &ref_values_7);
-        check_values(10, &ref_values_10);
+        check_values(5, &ref_values_5, i32::choose_rep, i32::checked_choose_rep);
+        check_values(7, &ref_values_7, i32::choose_rep, i32::checked_choose_rep);
+        check_values(10, &ref_values_10, i32::choose_rep, i32::checked_choose_rep);
+    }
+
+    #[test]
+    fn perm() {
+        let ref_values_4 = [1, 4, 12, 24, 24, 0];
+        let ref_values_7 = [1, 7, 42, 210, 840, 2520, 5040, 5040, 0];
+        let ref_values_13 = [
+            1, 13, 156, 1716, 17160, 154440, 1235520, 8648640, 51891840, 259459200, 1037836800,
+        ];
+        //3113510400, 6227020800, 6227020800,
+        check_values(4, &ref_values_4, i32::perm, i32::checked_perm);
+        check_values(7, &ref_values_7, i32::perm, i32::checked_perm);
+        check_values(13, &ref_values_13, i32::perm, i32::checked_perm);
+    }
+
+    #[test]
+    fn perm_edge() {
+        assert_eq!(0.perm(0), 1);
+        assert_eq!(1.perm(0), 1);
+        assert_eq!(0.perm(1), 0);
+    }
+
+    #[test]
+    fn perm_negative() {
+        for i in 0..4 {
+            assert_eq!((-4).perm(i), 0);
+            assert_eq!((-3).perm(i), 0);
+            assert_eq!((-3241).perm(i), 0);
+        }
+
+        for i in -4..0 {
+            assert_eq!(4.perm(i), 0);
+            assert_eq!(2.perm(i), 0);
+            assert_eq!(2341.perm(i), 0);
+            assert_eq!((-2).perm(i), 0);
+            assert_eq!((-4).perm(i), 0);
+            assert_eq!((-5).perm(i), 0);
+            assert_eq!((-3241).perm(i), 0);
+        }
     }
 }

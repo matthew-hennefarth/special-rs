@@ -5,6 +5,8 @@ use num_traits::{CheckedAdd, CheckedMul, FromPrimitive, One, ToPrimitive};
 /// This number should be optimized to do the most amount of multiplications in a single CPU
 const MAX_MULTIPLICATIONS: usize = 16;
 
+/// Factorial functions for integer-types.
+///
 /// Defines the `factorial`, `factorial2`, and `factorialk` functions
 /// for `Self`. Implemented for primitive integer types (usize, isize,
 /// etc).
