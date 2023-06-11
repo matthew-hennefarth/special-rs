@@ -1,3 +1,4 @@
+use crate::special::IsNegative;
 use num_traits::{CheckedAdd, CheckedMul, FromPrimitive, One, ToPrimitive};
 
 /// Number of multiplications to perform at once.
@@ -14,7 +15,7 @@ const MAX_MULTIPLICATIONS: usize = 16;
 /// which does not rely on checked operations for increased speed at the
 /// risk of panicking. For other types which satisfy the Factorial type,
 /// the un-checked methods simply unwrap the checked results.
-pub trait Factorial: Sized + CheckedMul + CheckedAdd {
+pub trait Factorial: Sized + CheckedMul + CheckedAdd + Copy {
     /// The factorial function is defined as the product of all positive integers less than or equal
     /// to $n$.
     /// $$
@@ -39,6 +40,9 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(3_isize.factorial(), 6);
     /// assert_eq!(5_isize.factorial(), 120);
     /// ```
+    /// # Negative Values
+    /// To avoid panicking, and to be consistent with Scipy, if provided
+    /// a negative number, `0` is returned.
     fn factorial(&self) -> Self {
         self.checked_factorial().unwrap()
     }
@@ -79,12 +83,16 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// ```
     /// ## For `isize`
     /// ```
+    /// use std::collections::hash_map::Values;
     /// use sci_rs::special::Factorial;
     ///
     /// assert_eq!(0_isize.factorial2(), 1);
     /// assert_eq!(3_isize.factorial2(), 3);
     /// assert_eq!(6_isize.factorial2(), 48);
     /// ```
+    /// # Negative Values
+    /// To avoid panicking, and to be consistent with Scipy, if provided
+    /// a negative number, `0` is returned.
     fn factorial2(&self) -> Self {
         self.checked_factorial2().unwrap()
     }
@@ -125,6 +133,9 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(5.factorialk(3), 10); // 5 * 2
     /// assert_eq!(10.factorialk(5), 50); // 10 * 5
     /// ```
+    /// # Negative Values
+    /// To avoid panicking, and to be consistent with Scipy, if provided
+    /// a negative number, `0` is returned.
     fn factorialk(&self, k: Self) -> Self {
         self.checked_factorialk(k).unwrap()
     }
@@ -157,40 +168,13 @@ const FACTORIAL2_CACHE: [u64; FACTORIAL2_CACHE_LEN] = [
     6190283353629375, 42849873690624000, 191898783962510625, 1371195958099968000,
 ];
 
-// Can change this to do something else I think if I want -1, -2 => 0 like in scipy.
-// Right now it should panic I believe.
-trait CheckNegatives {
-    fn internal_assert(&self);
-}
-
-macro_rules! impl_checknegatives_signed {
-    ($($T: ty)*) => ($(
-        impl CheckNegatives for $T {
-            #[inline(always)]
-            fn internal_assert(&self) {
-                assert!(*self >= 0, "A factorial function called with a negative number");
-            }
-        }
-)*)
-}
-
-macro_rules! impl_checknegatives_unsigned {
-    ($($T: ty)*) => ($(
-        impl CheckNegatives for $T {
-            #[inline(always)]
-            fn internal_assert(&self) {}
-        }
-)*)
-}
-
-impl_checknegatives_signed! {i8 i16 i32 i64 isize}
-impl_checknegatives_unsigned! {u8 u16 u32 u64 usize}
-
 macro_rules! factorial_primint_impl {
     ($($T: ty)*) => ($(
         impl Factorial for $T {
             fn factorial(&self) -> Self {
-                self.internal_assert();
+                if self.is_negative() {
+                    return 0;
+                }
                 let cache_as_type = FACTORIAL_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL_CACHE[*self as usize].try_into().unwrap();
@@ -199,7 +183,9 @@ macro_rules! factorial_primint_impl {
             }
 
             fn checked_factorial(&self) -> Option<Self> {
-                self.internal_assert();
+                if self.is_negative() {
+                    return Some(0);
+                }
                 let cache_as_type = FACTORIAL_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL_CACHE[*self as usize].try_into().ok();
@@ -209,7 +195,9 @@ macro_rules! factorial_primint_impl {
             }
 
             fn factorial2(&self) -> Self {
-                self.internal_assert();
+                if self.is_negative() {
+                    return 0;
+                }
                 let cache_as_type = FACTORIAL2_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL2_CACHE[*self as usize].try_into().unwrap();
@@ -218,7 +206,9 @@ macro_rules! factorial_primint_impl {
             }
 
             fn checked_factorial2(&self) -> Option<Self> {
-                self.internal_assert();
+                if self.is_negative() {
+                    return Some(0);
+                }
                 let cache_as_type = FACTORIAL2_CACHE_LEN as $T;
                 if *self < cache_as_type {
                     return FACTORIAL2_CACHE[*self as usize].try_into().ok();
@@ -228,7 +218,9 @@ macro_rules! factorial_primint_impl {
             }
 
             fn factorialk(&self, k: Self) -> Self {
-                self.internal_assert();
+                if self.is_negative() {
+                    return 0;
+                }
                 assert!(k > 0);
                 if *self == 0 {
                     return 1;
@@ -251,7 +243,9 @@ macro_rules! factorial_primint_impl {
             }
 
             fn checked_factorialk(&self, k: $T) -> Option<Self> {
-                self.internal_assert();
+                if self.is_negative() {
+                    return Some(0);
+                }
                 assert!(k > 0);
                 if *self == 0 {
                     return Some(1);
@@ -275,8 +269,7 @@ macro_rules! factorial_primint_impl {
     )*)
 }
 
-factorial_primint_impl! {u8 u16 u32 u64 usize}
-factorial_primint_impl! {i8 i16 i32 i64 isize}
+factorial_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
 #[cfg(has_i128)]
 factorial_primint_impl! {u128 i128}
 
@@ -331,6 +324,7 @@ mod tests {
         assert_eq!(0_u8.factorial(), 1);
         for i in 1_u8..3 {
             assert_eq!(i.factorial(), i);
+            assert_eq!(i.checked_factorial(), Some(i.factorial()));
         }
         assert_eq!(4_u8.factorial(), 24);
         assert_eq!(5_u8.factorial(), 120);
@@ -343,6 +337,7 @@ mod tests {
         assert_eq!(0_usize.factorial(), 1);
         for i in 1_usize..3 {
             assert_eq!(i.factorial(), i);
+            assert_eq!(i.checked_factorial(), Some(i.factorial()));
         }
         assert_eq!(4_usize.factorial(), 24);
         assert_eq!(13_usize.factorial(), 6_227_020_800);
@@ -357,6 +352,7 @@ mod tests {
         assert_eq!(0_i64.factorial(), 1);
         for i in 1_isize..3 {
             assert_eq!(i.factorial(), i);
+            assert_eq!(i.checked_factorial(), Some(i.factorial()));
         }
         assert_eq!(4_i64.factorial(), 24);
         assert_eq!(13_i64.factorial(), 6_227_020_800);
@@ -369,6 +365,7 @@ mod tests {
         assert_eq!(0_u8.factorial2(), 1);
         for i in 1_u8..4 {
             assert_eq!(i.factorial2(), i);
+            assert_eq!(i.checked_factorial2(), Some(i.factorial2()));
         }
         assert_eq!(5_u8.checked_factorial2(), Some(15));
         assert_eq!(7_u8.checked_factorial2(), Some(105));
@@ -381,6 +378,7 @@ mod tests {
         assert_eq!(0_usize.factorial2(), 1);
         for i in 1_usize..4 {
             assert_eq!(i.factorial2(), i);
+            assert_eq!(i.checked_factorial2(), Some(i.factorial2()));
         }
         assert_eq!(4_usize.factorial2(), 8);
         assert_eq!(13_usize.factorial2(), 135_135); // Taken from WolframAlpha
@@ -395,6 +393,7 @@ mod tests {
         assert_eq!(0_i64.factorial2(), 1);
         for i in 1_i64..4 {
             assert_eq!(i.factorial2(), i);
+            assert_eq!(i.checked_factorial2(), Some(i.factorial2()));
         }
         assert_eq!(4_i64.factorial2(), 8);
         assert_eq!(13_i64.factorial2(), 135_135); // Taken from WolframAlpha
@@ -407,6 +406,7 @@ mod tests {
         let k = 1;
         for i in 0..10 {
             assert_eq!(i.factorialk(k), i.factorial());
+            assert_eq!(i.checked_factorialk(k), Some(i.factorialk(k)));
         }
     }
 
@@ -415,6 +415,7 @@ mod tests {
         let k = 2;
         for i in 0..15 {
             assert_eq!(i.factorialk(k), i.factorial2());
+            assert_eq!(i.checked_factorialk(k), Some(i.factorialk(k)));
         }
     }
 
