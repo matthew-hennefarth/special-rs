@@ -1,5 +1,5 @@
 use num_traits::{CheckedAdd, CheckedMul, FromPrimitive, One, ToPrimitive};
-use std::ops;
+
 
 /// Number of multiplications to perform at once.
 /// This number should be optimized to do the most amount of multiplications in a single CPU
