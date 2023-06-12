@@ -61,4 +61,6 @@ float_const_impl! {
     SQRT_PI,
     #[doc = "Return $\\ln{\\pi}$"]
     LOG_PI,
+    #[doc= "Return $\\ln\\sqrt{2\\pi}$"]
+    LOG_SQRT_2_PI,
 }
