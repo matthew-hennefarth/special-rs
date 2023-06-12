@@ -17,7 +17,7 @@
 
 //! Various important physical and mathematical constants.
 
-/// $\sqrt{2\pi}$
-pub const SQRT_2_PI: f64 = 2.50662827463100050242;
-
 pub use std::f64::consts::*;
+
+/// $\sqrt{2\pi} = \sqrt{\tau}$
+pub const SQRT_TAU: f64 = 2.50662827463100050242f64;

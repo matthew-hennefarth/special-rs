@@ -26,9 +26,9 @@ mod combinatorics;
 mod factorial;
 mod gamma;
 
-pub use combinatorics::Combinatorics;
-pub use factorial::Factorial;
-pub use gamma::gamma;
+pub use combinatorics::*;
+pub use factorial::*;
+pub use gamma::*;
 
 /// Allows me to know if a number is negative irregardless of signed or
 /// unsigned

@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::constants::{E, PI, SQRT_2_PI};
+use crate::constants::{E, PI, SQRT_TAU};
 use num_traits::Zero;
 use std::ops::{Add, Mul};
 
@@ -61,7 +61,7 @@ fn stirling_series(x: f64) -> f64 {
     let series = 1.0 / x;
     let series = 1.0 + series * eval_poly(series, &STIR_COEFFICIENTS);
     let prefactor = (x / E).powf(x);
-    SQRT_2_PI / x.sqrt() * prefactor * series
+    SQRT_TAU / x.sqrt() * prefactor * series
 }
 
 /// The Gamma function for real-values arguments.
@@ -219,12 +219,30 @@ pub fn gamma(x: f64) -> f64 {
     z * p / q
 }
 
-/// Natural Logarithm of the Gamma Function for real-valued arguments.
+/// Natural logarithm of the Gamma function for
+/// real-valued arguments.
 ///
+/// Natural logarithm of the absolute value of the [gamma] function for
+/// real-valued arguments.
 ///
-// pub fn lngamma(x: f64) -> f64 {
-//
-// }
+/// $$
+/// \ln \left|\Gamma(x)\right|
+/// $$
+///
+/// # Examples
+///
+/// ## Notes
+/// Implementation is taken from the [cephes implementation] in the
+/// Scipy package.
+///
+/// # References
+/// - [cephes implementation]
+///
+/// [gamma]: crate::special::gamma()
+/// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
+pub fn gammaln(x: f64) -> f64 {
+    x
+}
 
 #[cfg(test)]
 mod tests {
