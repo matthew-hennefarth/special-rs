@@ -159,9 +159,6 @@ pub fn gamma(x: f64) -> f64 {
         return PI / (z.abs() * stirling_series(x_abs)) * if is_positive_sign { 1.0 } else { -1.0 };
     }
 
-    let mut x = x;
-    let mut z = 1.0;
-
     fn small(x: f64, z: f64) -> f64 {
         if x.is_zero() {
             f64::NAN
@@ -169,6 +166,9 @@ pub fn gamma(x: f64) -> f64 {
             z / ((1.0 + 0.5772156649015329 * x) * x)
         }
     }
+
+    let mut x = x;
+    let mut z = 1.0;
 
     while x >= 3.0 {
         x -= 1.0;
@@ -189,10 +189,10 @@ pub fn gamma(x: f64) -> f64 {
         z /= x;
         x += 1.0;
     }
+
     if x == 2.0 {
         return z;
     }
-    x -= 2.0;
 
     const P: [f64; 7] = [
         1.60119522476751861407E-4,
@@ -214,8 +214,8 @@ pub fn gamma(x: f64) -> f64 {
         1.00000000000000000320E0,
     ];
 
-    let p = eval_poly(x, &P);
-    let q = eval_poly(x, &Q);
+    let p = eval_poly(x - 2.0, &P);
+    let q = eval_poly(x - 2.0, &Q);
 
     z * p / q
 }

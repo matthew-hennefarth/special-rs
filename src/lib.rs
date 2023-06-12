@@ -23,6 +23,8 @@
 //! from Scipy. The focus is to implement everything in pure rust with
 //! minimal outside dependencies.
 
+// TODO put into some precision module file, then remove the warnings
+#[allow(dead_code)]
 fn is_close<T>(x: T, y: T, epsilon: T) -> bool
 where
     T: num_traits::Float,
@@ -37,6 +39,7 @@ where
     x.is_nan() && y.is_nan()
 }
 
+#[allow(unused_macros)]
 macro_rules! assert_almost_eq {
     ($a:expr, $b:expr, $prec:expr) => {
         if !$crate::is_close($a, $b, $prec) {
