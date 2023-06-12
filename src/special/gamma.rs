@@ -66,9 +66,9 @@ pub trait Gamma {
     /// [cephes implementation].
     ///
     /// # References
-    /// - \[[DLMF]\]
-    /// - \[[wiki]\]
-    /// - \[[cephes implementation]\]
+    /// - [DLMF]
+    /// - [wiki]
+    /// - [cephes implementation]
     ///
     /// [comment]: <> (Reference hyperlinks)
     /// [DLMF]: https://dlmf.nist.gov/5.2
@@ -77,10 +77,7 @@ pub trait Gamma {
     /// [factorial]: crate::special::Factorial::factorial
     fn gamma(self) -> Self;
 
-    /// Natural logarithm of the Gamma function.
-    ///
-    /// Natural logarithm of the absolute value of the [gamma] function.
-    ///
+    /// Natural logarithm of the absolute vale of the [gamma] function.
     /// $$
     /// \ln \left|\Gamma(z)\right|
     /// $$
@@ -90,6 +87,7 @@ pub trait Gamma {
     /// use sci_rs::special::Gamma;
     /// assert_eq!(1.0.gammaln(), 0.0); // ln(1) = 0
     /// assert_eq!(2.0.gammaln(), 0.0); // ln(1) = 0
+    /// assert!((14.5_f64.gammaln() - 23.86276584168908_f64).abs() < 1e-10 );
     /// ```
     ///
     /// ## Notes
@@ -102,6 +100,45 @@ pub trait Gamma {
     /// [gamma]: crate::special::gamma()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
     fn gammaln(self) -> Self;
+}
+
+/// Gamma function evaluated at $z$.
+///
+/// Has the same semantics as [gamma] in the [Gamma trait].
+///
+/// # Examples
+/// ```
+/// use sci_rs::special::{Gamma, gamma};
+/// assert_eq!(gamma(1.0_f32), 1.0_f32.gamma());
+/// assert_eq!(gamma(2.24_f64), 2.24_f64.gamma());
+/// ```
+///
+/// [Gamma trait]: crate::special::Gamma
+/// [gamma]: crate::special::Gamma::gamma
+#[inline(always)]
+pub fn gamma<T>(z: T) -> T
+where
+    T: Gamma,
+{
+    z.gamma()
+}
+
+/// Natural log of the Gamma function evaluated at $z$.
+///
+/// Has the same semantics as [gammaln] in the [Gamma trait].
+///
+/// # Examples
+/// ```
+/// use sci_rs::special::{Gamma, gammaln};
+/// assert_eq!(14.5_f64.gammaln(), gammaln(14.5_f64));
+/// ```
+/// [gammaln]: crate::special::Gamma::gammaln
+/// [Gamma trait]: crate::special::Gamma
+pub fn gammaln<T>(x: T) -> T
+where
+    T: Gamma,
+{
+    x.gammaln()
 }
 
 macro_rules! float_gamma_impl {
@@ -295,42 +332,6 @@ macro_rules! float_gamma_impl {
 }
 
 float_gamma_impl! {f32 f64}
-
-/// Gamma function evaluated at $z$.
-///
-/// Has the same semantics as [gamma] in the [Gamma trait].
-///
-/// # Examples
-/// ```
-/// use sci_rs::special::{Gamma, gamma};
-/// assert_eq!(gamma(1.0_f32), 1.0_f32.gamma());
-/// assert_eq!(gamma(2.24_f64), 2.24_f64.gamma());
-/// ```
-///
-/// [Gamma trait]: crate::special::Gamma
-/// [gamma]: crate::special::Gamma::gamma
-#[inline(always)]
-pub fn gamma<T>(z: T) -> T
-where
-    T: Gamma,
-{
-    z.gamma()
-}
-
-/// Natural log of the Gamma function evaluated at $z$.
-///
-/// Has the same semantics as [gammaln] in the [Gamma trait].
-///
-/// # Examples
-/// //TODO
-/// [gammaln]: crate::special::Gamma::gammaln
-/// [Gamma trait]: crate::special::Gamma
-pub fn gammaln<T>(x: T) -> T
-where
-    T: Gamma,
-{
-    x.gammaln()
-}
 
 /// Evaluate an $n$-degree polynomial at a specific value $x$.
 ///
