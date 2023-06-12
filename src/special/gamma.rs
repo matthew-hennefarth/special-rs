@@ -16,14 +16,14 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::constants::{E, PI, SQRT_TAU};
-use num_traits::Zero;
+use crate::constants::f64::{E, LOG_PI, PI, SQRT_TAU};
+use num_traits::{One, Zero};
 use std::ops::{Add, Mul};
 
 /// Evaluate an $n$-degree polynomial at a specific value $x$.
 ///
 /// Evaluates an $n$-degree polynomial where the coefficients are in
-/// reversed order. That is if $\text{coeffs}[i] = c_i$, then evaluate
+/// reversed order. That is if $\text{coeffs}\[i\] = c_i$, then evaluate
 /// $$
 /// c_0x^n + c_1x^{n-1} + \ldots + c_n
 /// $$
@@ -41,27 +41,45 @@ where
     }
 }
 
-/// Stirlings formula
+/// Stirlings Formula
 ///
 /// Compute the Stirling series for a given real-valued $x$.
 /// $$
-/// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^n \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \frac{139}{51840 x^3} - \frac{571}{2488320 x^4} + \ldots \right)
+/// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^n \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \ldots \right)
 /// $$
 /// See [here](https://dlmf.nist.gov/5.11) for a detailed explanation of
 /// the Stirling series and its relationship to the Gamma function.
+///
+/// ## Notes
+/// The implementation expands to 6th order and the coefficients are taken from OEIS: [A001164] and [A001163]
+///
+/// [A001164]: https://oeis.org/A001164
+/// [A001163]: https://oeis.org/A001163
 fn stirling_series(x: f64) -> f64 {
+    // Taken from OEIS: A001164
+    // Values pre-computed in rust
     const STIR_COEFFICIENTS: [f64; 5] = [
-        7.87311395793093628397E-4,
-        -2.29549961613378126380E-4,
-        -2.68132617805781232825E-3,
-        3.47222221605458667310E-3,
-        8.33333333333482257126E-2,
+        7.84039221720066615423E-4,  // 163879/209018880
+        -2.29472093621399167830E-4, // -571/2488320
+        -2.68132716049382727186E-3, // -139/51840
+        3.47222222222222202948E-3,  // 1/288
+        8.33333333333333287074E-2,  // 1/12
     ];
 
     let series = 1.0 / x;
-    let series = 1.0 + series * eval_poly(series, &STIR_COEFFICIENTS);
+    let series = f64::one() + series * eval_poly(series, &STIR_COEFFICIENTS);
     let prefactor = (x / E).powf(x);
     SQRT_TAU / x.sqrt() * prefactor * series
+}
+
+#[inline]
+fn euler_reflection_prefactor(x_abs: f64, x_floor: f64) -> f64 {
+    let z = if (x_abs - x_floor) > 0.5 {
+        (x_floor + 1.0) - x_abs
+    } else {
+        x_abs - x_floor
+    };
+    x_abs * (PI * z).sin()
 }
 
 /// The Gamma function for real-values arguments.
@@ -84,7 +102,7 @@ fn stirling_series(x: f64) -> f64 {
 /// ```
 /// use sci_rs::special::gamma;
 /// assert_eq!(gamma(4.0), 6.0); // Gamma(4) = 3!
-/// assert_eq!(gamma(0.0), f64::INFINITY); // Gamma(0) is undefined
+/// assert!(gamma(0.0).is_nan()); // Gamma(0) is undefined
 /// assert!((gamma(4.5) - 11.6317283).abs() <  1e-5);
 /// ```
 /// ## Notes
@@ -117,8 +135,12 @@ fn stirling_series(x: f64) -> f64 {
 /// [wiki]: https://en.wikipedia.org/wiki/Gamma_function
 /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
 pub fn gamma(x: f64) -> f64 {
+    fn gamma_singularity() -> f64 {
+        return f64::NAN;
+    }
+
     if x.is_zero() {
-        return f64::INFINITY;
+        return gamma_singularity();
     }
     if !x.is_finite() {
         return x;
@@ -135,32 +157,23 @@ pub fn gamma(x: f64) -> f64 {
         let x_abs_floor = x_abs.floor();
         // Gamma function has poles at the negative integers
         if x_abs_floor == x_abs {
-            return f64::INFINITY;
+            return gamma_singularity();
         }
 
         let is_positive_sign = (x_abs_floor as usize) % 2 == 1;
 
         // Utilize the Euler's reflection formula for the gamma function
         // Gamma(-z)Gamma(z) = -\frac{\pi}{z\sin\pi z}
-        let z = if (x_abs - x_abs_floor) > 0.5 {
-            (x_abs_floor + 1.0) - x_abs
-        } else {
-            x_abs - x_abs_floor
-        };
-        let z = x_abs * (PI * z).sin();
+        let z = euler_reflection_prefactor(x_abs, x_abs_floor);
         if z.is_zero() {
-            return if is_positive_sign {
-                f64::INFINITY
-            } else {
-                f64::NEG_INFINITY
-            };
+            return gamma_singularity();
         }
         return PI / (z.abs() * stirling_series(x_abs)) * if is_positive_sign { 1.0 } else { -1.0 };
     }
 
     fn small(x: f64, z: f64) -> f64 {
         if x.is_zero() {
-            f64::NAN
+            return gamma_singularity();
         } else {
             z / ((1.0 + 0.5772156649015329 * x) * x)
         }
@@ -230,6 +243,7 @@ pub fn gamma(x: f64) -> f64 {
 /// $$
 ///
 /// # Examples
+/// // TODO
 ///
 /// ## Notes
 /// Implementation is taken from the [cephes implementation] in the
@@ -241,12 +255,75 @@ pub fn gamma(x: f64) -> f64 {
 /// [gamma]: crate::special::gamma()
 /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
 pub fn gammaln(x: f64) -> f64 {
+    fn gammaln_singularity() -> f64 {
+        return f64::INFINITY;
+    }
+    if x < -34.0 {
+        // Utilize Euler reflection and compute gammaln at positive value.
+        let x_positive = -x;
+        let p = x_positive.floor();
+        if p == x_positive {
+            return gammaln_singularity();
+        }
+
+        let z = euler_reflection_prefactor(x_positive, p);
+        if z == 0.0 {
+            return gammaln_singularity();
+        }
+        return LOG_PI - z.ln() - gammaln(x_positive);
+    }
+
+    if x < 13.0 {
+        let mut z = 1.0;
+        let mut x = x;
+
+        while x >= 3.0 {
+            x -= 1.0;
+            z *= x;
+        }
+
+        while x < 2.0 {
+            if x == 0.0 {
+                return gammaln_singularity();
+            }
+            z /= x;
+            x += 1.0;
+        }
+        z = z.abs();
+        if x == 2.0 {
+            return z.ln();
+        }
+
+        x -= 2.0;
+        const B: [f64; 6] = [
+            -1.37825152569120859100E3,
+            -3.88016315134637840924E4,
+            -3.31612992738871184744E5,
+            -1.16237097492762307383E6,
+            -1.72173700820839662146E6,
+            -8.53555664245765465627E5,
+        ];
+        const C: [f64; 7] = [
+            1.00000000000000000000E0,
+            -3.51815701436523470549E2,
+            -1.70642106651881159223E4,
+            -2.20528590553854454839E5,
+            -1.13933444367982507207E6,
+            -2.53252307177582951285E6,
+            -2.01889141433532773231E6,
+        ];
+
+        let p = x * eval_poly(x, &B) / eval_poly(x, &C);
+        return z.ln() + p;
+    }
+
     x
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::f64::SQRT_PI;
     use crate::special::Factorial;
 
     const PRECISION: f64 = 1E-14;
@@ -282,13 +359,20 @@ mod tests {
     #[test]
     fn test_stirlings_series() {
         const REFERENCE_VALUES: [f64; 10] = [
-            1.0002254066045364, 1.0000025832104018, 2.000000311196281, 6.000000117138361,
-            24.00000008917026, 120.00000011090889, 720.0000001993579, 5040.000000478943,
-            40320.00000145789, 362880.0000054107,
+            1.0002224601164145,
+            1.0000024896493827,
+            2.0000002868007112,
+            6.0000001000594825,
+            24.0000000672158009,
+            120.0000000677005829,
+            720.0000000819628667,
+            5040.0000000665886546,
+            40319.9999996674159775,
+            362879.9999961055582389,
         ];
         const REFERENCE_140: f64 = 961572319694109.0E224;
         const REFERENCE_MAXSTIR: f64 = 2919114949633048.0E230;
-        const REFERENCE_MAXSTIR_P_EPSILON: f64 = 29191294268940794.0E229;
+        const REFERENCE_MAXSTIR_P_EPSILON: f64 = 29191294268940784.0E229;
 
         const REFERENCE_150: f64 = 3808922637630618.0E245;
         for i in 0..10 {
@@ -314,12 +398,30 @@ mod tests {
             assert_eq!(gamma(i as f64), (i - 1).factorial() as f64);
             assert!(gamma(-i as f64).is_nan());
         }
-        assert!(gamma(0.0).is_infinite());
+        assert!(gamma(0.0).is_nan());
         assert!(gamma(f64::NAN).is_nan());
 
-        assert_almost_eq!(gamma(-4.8), -0.062423361354759553, PRECISION);
-        assert_almost_eq!(gamma(-1.5), 2.3632718012073547030, PRECISION);
-        assert_almost_eq!(gamma(-0.5), -3.544907701811032054, PRECISION);
+        // Test the half-integers
+        assert_almost_eq!(gamma(-2.5), -8.0 / 15.0 * SQRT_PI, PRECISION); // OEIS: A019707
+        assert_almost_eq!(gamma(-1.5), (4.0 / 3.0) * SQRT_PI, PRECISION); // OEIS: A245886
+        assert_almost_eq!(gamma(-0.5), -2.0 * SQRT_PI, PRECISION); // OEIS: A245887
+        assert_almost_eq!(gamma(0.5), SQRT_PI, PRECISION); // OEIS: A002161
+        assert_almost_eq!(gamma(1.5), SQRT_PI / 2.0, PRECISION); // OEIS: A019704
+        assert_almost_eq!(gamma(2.5), 0.75 * SQRT_PI, PRECISION); // OEIS: A245884
+        assert_almost_eq!(gamma(3.5), 15.0 / 8.0 * SQRT_PI, PRECISION); // OEIS: A245885
+        assert_almost_eq!(gamma(4.5), 105.0 / 16.0 * SQRT_PI, PRECISION);
+        assert_almost_eq!(gamma(5.5), 945.0 / 32.0 * SQRT_PI, PRECISION);
+
+        // Rational Values
+        assert_almost_eq!(gamma(1.0 / 3.0), 2.6789385347077476337, PRECISION); // OEIS: A073005
+        assert_almost_eq!(gamma(0.25), 3.6256099082219083119, PRECISION); // OEIS: A068466
+        assert_almost_eq!(gamma(0.2), 4.5908437119988030532, PRECISION); // OEIS: A175380
+        assert_almost_eq!(gamma(1.0 / 6.0), 5.5663160017802352043, PRECISION); // OEIS: A175379
+        assert_almost_eq!(gamma(1.0 / 7.0), 6.5480629402478244377, PRECISION); // OEIS: A220086
+        assert_almost_eq!(gamma(1.0 / 8.0), 7.5339415987976119047, PRECISION); // OEIS: A203142
+
+        // Other Important Values
+        assert_almost_eq!(gamma(PI), 2.2880377953400324179, PRECISION); // OEIS: A269545
 
         assert_almost_eq!(
             gamma(1.000001e-35),
@@ -333,8 +435,9 @@ mod tests {
         );
         assert_almost_eq!(gamma(1.000001e-5), 99999.32279432557746387, PRECISION);
         assert_almost_eq!(gamma(1.000001e-2), 99.43248512896257405886, PRECISION);
-        assert_almost_eq!(gamma(0.5), 1.7724538509055160, PRECISION);
         assert_almost_eq!(gamma(1.62123), 0.896081923385351, PRECISION);
+
+        assert_almost_eq!(gamma(-4.8), -0.062423361354759553, PRECISION);
 
         assert_almost_eq!(
             gamma(1.0e-5 + 1.0e-16),
@@ -351,15 +454,9 @@ mod tests {
             1.000000000000005772156649015427511664653698987042926067639529,
             PRECISION
         );
-        assert_almost_eq!(gamma(1.0), 1.0, 1e-15);
         assert_almost_eq!(
             gamma(1.0 + 1.0e-14),
             0.99999999999999422784335098477029953441189552403615306268023,
-            PRECISION
-        );
-        assert_almost_eq!(
-            gamma(1.5),
-            0.886226925452758013649083741670572591398774728061193564106903,
             PRECISION
         );
         assert_almost_eq!(
@@ -367,46 +464,23 @@ mod tests {
             0.890560890381539328010659635359121005933541962884758999762766,
             PRECISION
         );
-        assert_eq!(gamma(2.0), 1.0);
-        assert_almost_eq!(
-            gamma(2.5),
-            1.329340388179137020473625612505858887098162092091790346160355,
-            PRECISION
-        );
-        assert_almost_eq!(gamma(3.0), 2.0, 1e-14);
-        assert_almost_eq!(
-            gamma(PI),
-            2.288037795340032417959588909060233922889688153356222441199380,
-            PRECISION
-        );
-        assert_almost_eq!(
-            gamma(3.5),
-            3.323350970447842551184064031264647217745405230229475865400889,
-            PRECISION
-        );
-        assert_almost_eq!(gamma(4.0), 6.0, 1e-13);
-        assert_almost_eq!(
-            gamma(4.5),
-            11.63172839656744892914422410942626526210891830580316552890311,
-            PRECISION
-        );
+
         assert_almost_eq!(gamma(5.0 - 1.0e-14), 23.999999999999652, PRECISION);
-        assert_almost_eq!(gamma(5.0), 24.0, 1e-12);
-        assert_almost_eq!(
-            gamma(5.0 + 1.0e-14),
-            24.00000000000036146824042363510111050137786752408660789873592,
-            PRECISION
-        );
-        assert_almost_eq!(
-            gamma(5.5),
-            52.34277778455352018114900849241819367949013237611424488006401,
-            PRECISION
-        );
+
         assert_almost_eq!(gamma(10.1), 454760.7514415855, PRECISION);
         assert_almost_eq!(
             gamma(150.0 + 1.0e-12),
             3.8089226376496421386707466577615064443807882167327097140e+260,
             1e248
         );
+    }
+
+    #[test]
+    fn test_gammaln() {
+        for i in -10..0 {
+            assert_eq!(gammaln(i as f64), f64::INFINITY);
+        }
+
+        assert_almost_eq!(gammaln(12.5), 18.73434751193644570163, PRECISION)
     }
 }

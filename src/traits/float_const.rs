@@ -16,48 +16,48 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-#![warn(missing_docs)]
-//! Sci-rs
-//!
-//! Rust library for various scientific applications. Inspiration taken
-//! from Scipy. The focus is to implement everything in pure rust with
-//! minimal outside dependencies.
+use crate::constants;
 
-// TODO put into some precision module file, then remove the warnings
-#[allow(dead_code)]
-fn is_close<T>(x: T, y: T, epsilon: T) -> bool
-where
-    T: num_traits::Float,
-{
-    if x.is_finite() {
-        return (x - y).abs() < epsilon;
-    }
-    if x.is_infinite() {
-        return x == y;
-    }
-    // NaN != Nan apparently
-    x.is_nan() && y.is_nan()
+macro_rules! constant {
+    ($( $method:ident () -> $ret:expr ; )*)
+        => {$(
+            #[inline]
+            fn $method() -> Self {
+                $ret
+            }
+        )*};
 }
 
-#[allow(unused_macros)]
-macro_rules! assert_almost_eq {
-    ($a:expr, $b:expr, $prec:expr) => {
-        if !$crate::is_close($a, $b, $prec) {
-            panic!(
-                "assertion failed: `abs(left - right) < {:e}`, (left:
-`{}`, right: `{}`)",
-                $prec, $a, $b
-            );
+macro_rules! float_const_impl {
+    ($(#[$doc:meta] $constant:ident,)+) => (
+        #[allow(non_snake_case)]
+        /// Numeric traits for floating points which implement constant
+        /// values from [crate::constants].
+        ///
+        /// Extends the usage of [num_traits::FloatConst] to the
+        /// additional constants in the [sci_rs] library.
+        ///
+        /// [sci_rs]: crate
+        pub trait FloatConst : num_traits::FloatConst {
+            $(#[$doc] fn $constant() -> Self;)+
         }
-    };
+        float_const_impl! { @float f32, $($constant,)+ }
+        float_const_impl! { @float f64, $($constant,)+ }
+    );
+    (@float $T:ident, $($constant:ident,)+) => (
+        impl FloatConst for $T {
+            constant! {
+                $( $constant() -> constants::$T::$constant; )+
+            }
+        }
+    );
 }
 
-pub mod constants;
-pub mod special;
-pub mod traits;
-
-// mod preamble {
-//     pub use crate::*;
-// }
-
-//use crate::preamble::*;
+float_const_impl! {
+    #[doc = "Return $\\sqrt{\\tau}$"]
+    SQRT_TAU,
+    #[doc = "Return $\\sqrt{\\pi}$"]
+    SQRT_PI,
+    #[doc = "Return $\\ln{\\pi}$"]
+    LOG_PI,
+}

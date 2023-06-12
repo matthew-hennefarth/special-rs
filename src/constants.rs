@@ -16,8 +16,66 @@
 //**********************************************************************
 
 //! Various important physical and mathematical constants.
+//!
+//! Includes all standard library constants, but includes additional
+//! important quantities.
+//!
+//! - $\sqrt{\tau}$
+//! - $\sqrt{\pi}$
+//! - $\ln{\pi}$
 
-pub use std::f64::consts::*;
+pub mod f64 {
+    //! Extended mathematical constants for the `f64` double-precision
+    //! floating point type.
 
-/// $\sqrt{2\pi} = \sqrt{\tau}$
-pub const SQRT_TAU: f64 = 2.50662827463100050242f64;
+    pub use std::f64::consts::*;
+
+    /// $\sqrt{2\pi} = \sqrt{\tau}$
+    ///
+    /// Value taken from OEIS: [A019727]
+    ///
+    /// [A019727]: https://oeis.org/A019727
+    pub const SQRT_TAU: f64 = 2.50662827463100050241576528481_f64;
+
+    /// $\sqrt{\pi}$
+    ///
+    /// Value taken from OEIS: [A002161]
+    ///
+    /// [A002161]: https://oeis.org/A002161
+    pub const SQRT_PI: f64 = 1.77245385090551602729816748334_f64;
+
+    /// $\log\pi$
+    ///
+    /// Value taken from OEIS: [A053510]
+    ///
+    /// [A053510]: https://oeis.org/A053510
+    pub const LOG_PI: f64 = 1.14472988584940017414342735135_f64;
+}
+
+pub mod f32 {
+    //! Extended mathematical constants for the `f32` double-precision
+    //! floating point type.
+
+    pub use std::f32::consts::*;
+
+    /// $\sqrt{2\pi} = \sqrt{\tau}$
+    ///
+    /// Value taken from OEIS: [A019727]
+    ///
+    /// [A019727]: https://oeis.org/A019727
+    pub const SQRT_TAU: f32 = 2.50662827463100050241576528481_f32;
+
+    /// $\sqrt{\pi}$
+    ///
+    /// Value taken from OEIS: [A002161]
+    ///
+    /// [A002161]: https://oeis.org/A002161
+    pub const SQRT_PI: f32 = 1.77245385090551602729816748334_f32;
+
+    /// $\log\pi$
+    ///
+    /// Value taken from OEIS: [A053510]
+    ///
+    /// [A053510]: https://oeis.org/A053510
+    pub const LOG_PI: f32 = 1.14472988584940017414342735135_f32;
+}
