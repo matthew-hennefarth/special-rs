@@ -19,11 +19,12 @@
 //! Special mathematical functions
 //!
 //! # Available Functions
-//! - Factorial, double factorial, and k-factorial
-//! - Combinatorics
-//!
+//! - Factorial, double factorial, and $k$-factorial
+//! - Combinatorics (choice and permutations)
+//! - Gamma and related functions
 mod combinatorics;
 mod factorial;
+mod gamma;
 
 pub use combinatorics::Combinatorics;
 pub use factorial::Factorial;
