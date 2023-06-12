@@ -19,9 +19,9 @@
 #![warn(missing_docs)]
 //! Sci-rs
 //!
-//! Rust library for various scientific applications. Inspiration taken
-//! from Scipy. The focus is to implement everything in pure rust with
-//! minimal outside dependencies.
+//! A scientific library written in pure Rust inspired by [SciPy].
+//!
+//! [SciPy]: https://scipy.org/
 
 // TODO put into some precision module file, then remove the warnings
 #[allow(dead_code)]

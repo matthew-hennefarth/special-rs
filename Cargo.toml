@@ -3,6 +3,10 @@ name = "sci-rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["Matthew R. Hennefarth"]
+description = "Scientific library written in pure Rust"
+homepage = "https://github.com/matthew-hennefarth/sci-rs"
+license = "Apache-2.0"
+readme = "README.md"
 
 [dependencies]
 num-traits = "0.2"
