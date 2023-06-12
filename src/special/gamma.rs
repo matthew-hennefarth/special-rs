@@ -64,14 +64,21 @@ fn stirling_series(x: f64) -> f64 {
     SQRT_2_PI / x.sqrt() * prefactor * series
 }
 
-/// The Gamma function
+/// The Gamma function for real-values arguments.
 ///
 /// The Gamma function is defined as
 /// $$
 /// \Gamma(z) = \int^{\infty}_0 t^{z-1}e^{-t}dt
 /// $$
 /// where $\Re (z) > 0$. It is defined for the entire complex plane
-/// through analytic continuation.
+/// through analytic continuation. It is a generalization of the
+/// factorial function to integer values.
+/// $$
+/// \Gamma(x+1) = x!
+/// $$
+/// For a more thorough explanation of the Gamma function and all of its
+/// properties, it is recommended to read through the [DLMF] or [wiki]
+/// page.
 ///
 /// # Examples
 /// ```
@@ -86,15 +93,30 @@ fn stirling_series(x: f64) -> f64 {
 /// $$
 /// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^x \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \frac{139}{51840 x^3} - \frac{571}{2488320 x^4} + \ldots \right)
 /// $$
-///
-/// Otherwise we recursively put the value into the range of \(2,3\) using
+/// We additionally utilize the Euler's reflection formula for the Gamma
+/// function to relate negative values to positive values.
 /// $$
-/// \Gamma(x+1) =x\Gamma(x)
+/// \Gamma(-z)\Gamma(z) = -\frac{\pi}{z\sin\pi z}
 /// $$
-/// Then we use 2 ration functions of degree 6 and 7 to approximate the
+/// Otherwise we recursively put the value into the range of $(2,3)$ using
+/// $$
+/// \Gamma(z+1) =z\Gamma(z)
+/// $$
+/// Then we use 2 rational functions of degree 6 and 7 to approximate the
 /// Gamma function in this interval. This implementation is based off of
-/// the implementation of Scipy which comes from cephes (see
-/// [here](https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c)).
+/// the implementation of Scipy which comes from cephes
+/// [cephes implementation]. It is currently unknown the number of
+/// digits of accuracy for the given implementation.
+///
+/// # References
+/// - [DLMF]
+/// - [wiki]
+/// - [cephes implementation]
+///
+/// [comment]: <> (Reference hyperlinks)
+/// [DLMF]: https://dlmf.nist.gov/5.2
+/// [wiki]: https://en.wikipedia.org/wiki/Gamma_function
+/// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
 pub fn gamma(x: f64) -> f64 {
     if x.is_zero() {
         return f64::INFINITY;
