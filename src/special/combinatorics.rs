@@ -52,7 +52,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
         self.checked_choose(k).unwrap()
     }
 
-    /// Checked version of the `choose` function.
+    /// Checked version of the [choose] function.
     ///
     /// # Examples
     /// ```
@@ -61,6 +61,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(7.checked_choose(3), Some(35));
     /// assert_eq!(50_u8.checked_choose(4), None); // Overflows a u8
     /// ```
+    /// [choose]: crate::special::Combinatorics::choose
     fn checked_choose(self, k: Self) -> Option<Self>;
 
     /// Number of combinations with repetition.
@@ -72,8 +73,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     ///    n \\\\ k
     /// \end{pmatrix}\right) = \begin{pmatrix} n + k -1 \\\\ k \end{pmatrix}
     /// $$
-    /// For more detailed explanation see
-    /// [Wiki](https://en.wikipedia.org/wiki/Combination#Number_of_combinations_with_repetition)
+    /// For more detailed explanation see the [wiki] page.
     ///
     /// # Examples
     /// ```
@@ -84,11 +84,16 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     ///
     /// ## Notes
     /// When $n$ < 0 or $k<0$ or $n<k$, then $0$ is returned.
+    ///
+    /// # References
+    /// - [wiki]
+    ///
+    /// [wiki]: https://en.wikipedia.org/wiki/Combination#Number_of_combinations_with_repetition
     fn choose_rep(self, k: Self) -> Self {
         self.checked_choose_rep(k).unwrap()
     }
 
-    /// Checked version of `choose_rep` to prevent overflow panics.
+    /// Checked version of [choose_rep] to prevent overflow panics.
     ///
     /// # Examples
     ///```
@@ -97,6 +102,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(10.checked_choose_rep(3), Some(220));
     /// assert_eq!(12_u8.checked_choose_rep(3), None); // Overflows a u8
     /// ```
+    /// [choose_rep]: crate::special::Combinatorics::choose_rep
     fn checked_choose_rep(self, k: Self) -> Option<Self>;
 
     /// Number of permutations of $n$ things taken $k$ at a time.
@@ -119,7 +125,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
         self.checked_perm(k).unwrap()
     }
 
-    /// Checked version of `perm` to prevent overflow panics.
+    /// Checked version of [perm] to prevent overflow panics.
     ///
     /// # Examples
     ///```
@@ -127,6 +133,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(154.checked_perm(154), None); //Should overflow since 154!
     /// assert_eq!(4.checked_perm(3), Some(4*3*2*1));
     /// ```
+    /// [perm]: crate::special::Combinatorics::perm
     fn checked_perm(self, k: Self) -> Option<Self>;
 }
 

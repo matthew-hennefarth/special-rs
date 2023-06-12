@@ -28,13 +28,6 @@ const MAX_MULTIPLICATIONS: usize = 16;
 /// Defines the `factorial`, `factorial2`, and `factorialk` functions
 /// for `Self`. Implemented for primitive integer types (usize, isize,
 /// etc).
-///
-/// ## Implementation for Primitive Integers
-/// For primitive integer types, a different implementation is
-/// provided for the regular `factorial`, `factorial2`, and `factorialk`
-/// which does not rely on checked operations for increased speed at the
-/// risk of panicking. For other types which satisfy the Factorial type,
-/// the un-checked methods simply unwrap the checked results.
 pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// The factorial function is defined as the product of all positive integers less than or equal
     /// to $n$.
@@ -60,14 +53,13 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(3_isize.factorial(), 6);
     /// assert_eq!(5_isize.factorial(), 120);
     /// ```
-    /// # Negative Values
-    /// To avoid panicking, and to be consistent with Scipy, if provided
-    /// a negative number, `0` is returned.
+    /// ## Notes
+    /// If $n < 0$ returns 0.
     fn factorial(self) -> Self {
         self.checked_factorial().unwrap()
     }
 
-    /// Checked version of the factorial function which catches overflow.
+    /// Checked version of the [factorial] function which catches overflow.
     ///
     /// # Examples
     /// ```
@@ -76,9 +68,11 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(2_u8.checked_factorial(), Some(2));
     /// assert_eq!(10_u8.checked_factorial(), None); // 10! overflows a u8
     /// ```
+    /// [factorial]: crate::special::Factorial::factorial
     fn checked_factorial(self) -> Option<Self>;
 
-    /// The double factorial $n!!$ is defined as the product of all positive integers up to $n$ that have the same parity as $n$.
+    /// The double factorial $n!!$ is defined as the product of all
+    /// positive integers up to $n$ that have the same parity as $n$.
     /// $$
     /// n!! = n (n-2) (n-4) \times \ldots
     /// $$
@@ -110,14 +104,13 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(3_isize.factorial2(), 3);
     /// assert_eq!(6_isize.factorial2(), 48);
     /// ```
-    /// # Negative Values
-    /// To avoid panicking, and to be consistent with Scipy, if provided
-    /// a negative number, `0` is returned.
+    /// ## Notes
+    /// If $n < 0$ returns 0.
     fn factorial2(self) -> Self {
         self.checked_factorial2().unwrap()
     }
 
-    /// Checked version of the `factorial2` function which catches overflow.
+    /// Checked version of the [factorial2] function which catches overflow.
     ///
     /// # Examples
     /// ```
@@ -127,11 +120,12 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(5_u8.checked_factorial2(), Some(15));
     /// assert_eq!(33_u8.checked_factorial2(), None); // 33!! overflows a u8
     /// ```
+    /// [factorial2]: crate::special::Factorial::factorial2
     fn checked_factorial2(self) -> Option<Self>;
 
     /// Generalized $k$-factorial.
     ///
-    /// Generalization of the factorial to steps of size $k$.
+    /// Generalization of the [factorial] to steps of size $k$.
     /// $$
     /// n(!!\ldots!) = (n)(n-k)(n-2k)\ldots
     /// $$
@@ -153,14 +147,15 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(5.factorialk(3), 10); // 5 * 2
     /// assert_eq!(10.factorialk(5), 50); // 10 * 5
     /// ```
-    /// # Negative Values
-    /// To avoid panicking, and to be consistent with Scipy, if provided
-    /// a negative number, `0` is returned.
+    /// ## Notes
+    /// If $n < 0$ returns 0.
+    ///
+    /// [factorial]: crate::special::Factorial::factorial
     fn factorialk(self, k: Self) -> Self {
         self.checked_factorialk(k).unwrap()
     }
 
-    /// Checked version of the `factorialk` function which catches overflow.
+    /// Checked version of the [factorialk] function which catches overflow.
     ///
     /// # Examples
     /// ```
@@ -170,6 +165,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(10_u8.checked_factorialk(4), Some(120));
     /// assert_eq!(31_u8.checked_factorialk(3), None); // 33!! overflows a u8
     /// ```
+    /// [factorialk]: crate::special::Factorial::factorialk
     fn checked_factorialk(self, k: Self) -> Option<Self>;
 }
 

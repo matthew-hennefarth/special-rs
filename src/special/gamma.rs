@@ -51,11 +51,11 @@ where
 /// the Stirling series and its relationship to the Gamma function.
 fn stirling_series(x: f64) -> f64 {
     const STIR_COEFFICIENTS: [f64; 5] = [
-        7.84039221720066615423E-4,
-        -2.29472093621399167830E-4,
-        -2.68132716049382727186E-3,
-        3.47222222222222202948E-3,
-        8.33333333333333287074E-2,
+        7.87311395793093628397E-4,
+        -2.29549961613378126380E-4,
+        -2.68132617805781232825E-3,
+        3.47222221605458667310E-3,
+        8.33333333333482257126E-2,
     ];
 
     let series = 1.0 / x;
@@ -72,7 +72,7 @@ fn stirling_series(x: f64) -> f64 {
 /// $$
 /// where $\Re (z) > 0$. It is defined for the entire complex plane
 /// through analytic continuation. It is a generalization of the
-/// factorial function to integer values.
+/// [crate::special::Factorial::factorial] function to integer values.
 /// $$
 /// \Gamma(x+1) = x!
 /// $$
@@ -104,9 +104,8 @@ fn stirling_series(x: f64) -> f64 {
 /// $$
 /// Then we use 2 rational functions of degree 6 and 7 to approximate the
 /// Gamma function in this interval. This implementation is based off of
-/// the implementation of Scipy which comes from cephes
-/// [cephes implementation]. It is currently unknown the number of
-/// digits of accuracy for the given implementation.
+/// the implementation of Scipy which comes from the
+/// [cephes implementation].
 ///
 /// # References
 /// - [DLMF]
@@ -220,6 +219,13 @@ pub fn gamma(x: f64) -> f64 {
     z * p / q
 }
 
+/// Natural Logarithm of the Gamma Function for real-valued arguments.
+///
+///
+// pub fn lngamma(x: f64) -> f64 {
+//
+// }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,13 +264,13 @@ mod tests {
     #[test]
     fn test_stirlings_series() {
         const REFERENCE_VALUES: [f64; 10] = [
-            1.0002224601164145, 1.0000024896493827, 2.000000286800711, 6.0000001000594825,
-            24.0000000672158, 120.00000006770058, 720.0000000819629, 5040.000000066589,
-            40319.999999667416, 362879.99999610556,
+            1.0002254066045364, 1.0000025832104018, 2.000000311196281, 6.000000117138361,
+            24.00000008917026, 120.00000011090889, 720.0000001993579, 5040.000000478943,
+            40320.00000145789, 362880.0000054107,
         ];
         const REFERENCE_140: f64 = 961572319694109.0E224;
         const REFERENCE_MAXSTIR: f64 = 2919114949633048.0E230;
-        const REFERENCE_MAXSTIR_P_EPSILON: f64 = 29191294268940784.0E229;
+        const REFERENCE_MAXSTIR_P_EPSILON: f64 = 29191294268940794.0E229;
 
         const REFERENCE_150: f64 = 3808922637630618.0E245;
         for i in 0..10 {
