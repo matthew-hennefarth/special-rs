@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::IsNegative;
+use crate::traits::GenericInt;
 use num_traits::{CheckedAdd, CheckedMul};
 use std::cmp::min;
 

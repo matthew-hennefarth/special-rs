@@ -16,8 +16,8 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::IsNegative;
-use num_traits::{CheckedAdd, CheckedMul, FromPrimitive, One, ToPrimitive};
+use crate::traits::GenericInt;
+use num_traits::{CheckedAdd, CheckedMul, PrimInt};
 
 /// Number of multiplications to perform at once.
 /// This number should be optimized to do the most amount of multiplications in a single CPU
@@ -301,7 +301,7 @@ factorial_primint_impl! {u128 i128}
 #[inline(always)]
 fn checked_partial_product<T>(mut start: T, stop: T, step: T) -> Option<T>
 where
-    T: Sized + PartialOrd + FromPrimitive + ToPrimitive + One + CheckedMul + CheckedAdd + Copy,
+    T: PrimInt,
 {
     let mut result = Some(T::one());
     while start <= stop {
@@ -319,17 +319,16 @@ where
 /// where $n_0 = $ `start`, $n_{i+1} = \text{step}\times n_i$, and $n_k$
 /// is the largest value such that $n_k < $ `stop + 1`./
 #[inline(always)]
-fn partial_product<T>(start: T, stop: T, step: T) -> T
+fn partial_product<T>(mut start: T, stop: T, step: T) -> T
 where
-    T: PartialOrd + FromPrimitive + ToPrimitive,
+    T: PrimInt,
 {
-    assert!(start <= stop);
-    T::from_isize(
-        (start.to_isize().unwrap()..stop.to_isize().unwrap() + 1)
-            .step_by(step.to_usize().unwrap())
-            .product::<isize>(),
-    )
-    .unwrap()
+    let mut result = T::one();
+    while start <= stop {
+        result = result * start;
+        start = start + step;
+    }
+    result
 }
 
 #[cfg(test)]
