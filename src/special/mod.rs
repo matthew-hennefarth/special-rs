@@ -28,6 +28,7 @@ mod gamma;
 
 pub use combinatorics::Combinatorics;
 pub use factorial::Factorial;
+pub use gamma::gamma;
 
 /// Allows me to know if a number is negative irregardless of signed or
 /// unsigned

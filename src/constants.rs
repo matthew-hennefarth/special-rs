@@ -15,6 +15,9 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-pub use std::f64::consts::*;
+//! Various important physical and mathematical constants.
 
+/// $\sqrt{2\pi}$
 pub const SQRT_2_PI: f64 = 2.50662827463100050242;
+
+pub use std::f64::consts::*;

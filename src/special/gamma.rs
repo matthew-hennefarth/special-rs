@@ -66,14 +66,35 @@ fn stirling_series(x: f64) -> f64 {
 
 /// The Gamma function
 ///
-/// We will use the Stirling series for the Gamma function when $|x| > 33$.
+/// The Gamma function is defined as
+/// $$
+/// \Gamma(z) = \int^{\infty}_0 t^{z-1}e^{-t}dt
+/// $$
+/// where $\Re (z) > 0$. It is defined for the entire complex plane
+/// through analytic continuation.
 ///
-/// Otherwise we recursively put the value into the range of [2,3] using
+/// # Examples
+/// ```
+/// use sci_rs::special::gamma;
+/// assert_eq!(gamma(4.0), 6.0); // Gamma(4) = 3!
+/// assert_eq!(gamma(0.0), f64::INFINITY); // Gamma(0) is undefined
+/// assert!((gamma(4.5) - 11.6317283).abs() <  1e-5);
+/// ```
+/// ## Notes
+/// The implementation uses a few different methods. Firstly, if
+/// $|x| > 33$, then we utilize the Stirling series which is given by
 /// $$
-/// Gamma(x+1) =xGamma(x)
+/// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^x \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \frac{139}{51840 x^3} - \frac{571}{2488320 x^4} + \ldots \right)
 /// $$
-/// Then we use the Lanczos Approximation in this region (using the
-/// partial fraction version of the Lanczos Approximation)
+///
+/// Otherwise we recursively put the value into the range of \(2,3\) using
+/// $$
+/// \Gamma(x+1) =x\Gamma(x)
+/// $$
+/// Then we use 2 ration functions of degree 6 and 7 to approximate the
+/// Gamma function in this interval. This implementation is based off of
+/// the implementation of Scipy which comes from cephes (see
+/// [here](https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c)).
 pub fn gamma(x: f64) -> f64 {
     if x.is_zero() {
         return f64::INFINITY;
@@ -247,7 +268,7 @@ mod tests {
             assert_eq!(gamma(i as f64), (i - 1).factorial() as f64);
             assert!(gamma(-i as f64).is_nan());
         }
-        assert!(gamma(0.0).is_infinte());
+        assert!(gamma(0.0).is_infinite());
         assert!(gamma(f64::NAN).is_nan());
 
         assert_almost_eq!(gamma(-4.8), -0.062423361354759553, PRECISION);
@@ -274,10 +295,15 @@ mod tests {
             99999.42279322556767360213300482199406241771308740302819426480,
             1e-9
         );
-        assert_almost_eq!(:gamma(0.1), 9.513507698668731836292487177265402192550578626088377343050000, 1e-14);
-        assert_eq!(
+        assert_almost_eq!(
+            gamma(0.1),
+            9.513507698668731836292487177265402192550578626088377343050000,
+            1e-14
+        );
+        assert_almost_eq!(
             gamma(1.0 - 1.0e-14),
-            1.000000000000005772156649015427511664653698987042926067639529
+            1.000000000000005772156649015427511664653698987042926067639529,
+            PRECISION
         );
         assert_almost_eq!(gamma(1.0), 1.0, 1e-15);
         assert_almost_eq!(
@@ -291,7 +317,7 @@ mod tests {
             PRECISION
         );
         assert_almost_eq!(
-            gamma(consts::PI / 2.0),
+            gamma(PI / 2.0),
             0.890560890381539328010659635359121005933541962884758999762766,
             PRECISION
         );
@@ -303,7 +329,7 @@ mod tests {
         );
         assert_almost_eq!(gamma(3.0), 2.0, 1e-14);
         assert_almost_eq!(
-            gamma(consts::PI),
+            gamma(PI),
             2.288037795340032417959588909060233922889688153356222441199380,
             PRECISION
         );
@@ -318,11 +344,7 @@ mod tests {
             11.63172839656744892914422410942626526210891830580316552890311,
             PRECISION
         );
-        assert_almost_eq!(
-            gamma(5.0 - 1.0e-14),
-            23.99999999999963853175957637087420162718107213574617032780374,
-            PRECISION
-        );
+        assert_almost_eq!(gamma(5.0 - 1.0e-14), 23.999999999999652, PRECISION);
         assert_almost_eq!(gamma(5.0), 24.0, 1e-12);
         assert_almost_eq!(
             gamma(5.0 + 1.0e-14),
@@ -334,11 +356,7 @@ mod tests {
             52.34277778455352018114900849241819367949013237611424488006401,
             PRECISION
         );
-        assert_almost_eq!(
-            gamma(10.1),
-            454760.7514415859508673358368319076190405047458218916492282448,
-            PRECISION
-        );
+        assert_almost_eq!(gamma(10.1), 454760.7514415855, PRECISION);
         assert_almost_eq!(
             gamma(150.0 + 1.0e-12),
             3.8089226376496421386707466577615064443807882167327097140e+260,
