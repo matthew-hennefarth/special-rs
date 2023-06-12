@@ -1,8 +1,8 @@
-use num_traits::Signed;
+use num_traits::{PrimInt, Signed};
 
 /// Allows me to know if a number is negative irregardless of signed or
 /// unsigned
-pub(crate) trait GenericInt {
+pub(crate) trait GenericInt: PrimInt {
     fn is_negative(&self) -> bool;
 }
 

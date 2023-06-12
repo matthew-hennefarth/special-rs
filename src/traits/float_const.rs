@@ -17,6 +17,7 @@
 //**********************************************************************
 
 use crate::constants;
+use num_traits::FloatConst;
 
 macro_rules! constant {
     ($( $method:ident () -> $ret:expr ; )*)
@@ -38,14 +39,14 @@ macro_rules! float_const_impl {
         /// additional constants in the [sci_rs] library.
         ///
         /// [sci_rs]: crate
-        pub trait FloatConst : num_traits::FloatConst {
+        pub trait FloatConstants: FloatConst {
             $(#[$doc] fn $constant() -> Self;)+
         }
         float_const_impl! { @float f32, $($constant,)+ }
         float_const_impl! { @float f64, $($constant,)+ }
     );
     (@float $T:ident, $($constant:ident,)+) => (
-        impl FloatConst for $T {
+        impl FloatConstants for $T {
             constant! {
                 $( $constant() -> constants::$T::$constant; )+
             }

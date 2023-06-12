@@ -209,7 +209,6 @@ factorial_primint_impl! {u128 i128}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num_traits::FromPrimitive;
 
     fn check_values<T>(
         x: T,
@@ -217,7 +216,7 @@ mod tests {
         func: fn(T, T) -> T,
         checked_func: fn(T, T) -> Option<T>,
     ) where
-        T: Sized + Combinatorics + PartialEq + std::fmt::Debug + FromPrimitive + Copy,
+        T: GenericInt + num_traits::FromPrimitive + std::fmt::Debug,
     {
         for (i, &val) in ref_values.iter().enumerate() {
             let i = T::from_usize(i).unwrap();
