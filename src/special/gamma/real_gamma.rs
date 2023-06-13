@@ -23,9 +23,15 @@ use crate::traits::FloatSciConst;
 /// Gamma related functions which only accept real-valued arguments.
 pub trait RealGamma: Gamma {
     /// Natural logarithm of the absolute vale of the [gamma] function.
+    ///
     /// $$
     /// \ln \left|\Gamma(x)\right|
     /// $$
+    /// Useful since it avoids the need of choosing a particular branch of the complex log function. For real-valued arguments $x$, we have the additional relationship:
+    /// $$
+    /// \Gamma(x) = \text{gammasgn}(x)e^{\ln{\left|\Gamma(x)\right|}}
+    /// $$
+    /// where [gammasgn] is the sign of the [gamma] function
     ///
     /// # Examples
     /// ```
@@ -41,14 +47,39 @@ pub trait RealGamma: Gamma {
     /// # References
     /// - [cephes implementation]
     ///
-    /// [gamma]: crate::special::gamma()
+    /// [gamma]: crate::special::Gamma::gamma()
+    /// [gammasgn]: crate::special::RealGamma::gammasgn()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
     fn gammaln(self) -> Self;
+
+    /// Sign of the [gamma] function.
+    ///
+    /// $$
+    /// \text{gammasgn}(x) = \begin{cases}
+    /// +1.0 & \Gamma(x) > 0 \\\\
+    /// -1.0 & \Gamma(x) < 0
+    /// \end{cases}
+    /// $$
+    /// The [gamma] function is never zero and so this is a well-defined function on the gamma function domain.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::RealGamma;
+    /// assert_eq!(1.23.gammasgn(), 1.0);
+    /// assert_eq!((-0.23).gammasgn(), -1.0);
+    /// assert_eq!((-1.5).gammasgn(), 1.0);
+    /// ```
+    ///
+    /// ## Notes
+    /// We return $0.0$ if $\Gamma(x)$  is undefined (where [gamma] returns `NaN` or `Inf`). This is $x=0.0, -1, -2, \ldots$.
+    ///
+    /// [gamma]: crate::special::Gamma::gamma()
+    fn gammasgn(self) -> Self;
 }
 
 /// Natural log of the Gamma function evaluated at $z$.
 ///
-/// Has the same semantics as [gammaln] in the [Gamma trait].
+/// Has the same semantics as [gammaln] in the [RealGamma trait].
 ///
 /// # Examples
 /// ```
@@ -56,12 +87,31 @@ pub trait RealGamma: Gamma {
 /// assert_eq!(14.5_f64.gammaln(), gammaln(14.5_f64));
 /// ```
 /// [gammaln]: crate::special::RealGamma::gammaln
-/// [Gamma trait]: crate::special::Gamma
+/// [RealGamma trait]: crate::special::RealGamma
 pub fn gammaln<T>(x: T) -> T
 where
     T: RealGamma,
 {
     x.gammaln()
+}
+
+/// Sign of the Gamma function.
+///
+/// Has the same semantics as [gammasgn] in the [RealGamma trait]
+///
+/// # Examples
+/// ```
+/// use sci_rs::special::{RealGamma, gammasgn};
+/// assert_eq!(5.2.gammasgn(), gammasgn(5.2));
+/// ```
+///
+/// [gammasgn]: crate::special::RealGamma::gammasgn
+/// [RealGamma trait]: crate::special::RealGamma
+pub fn gammasgn<T>(x: T) -> T
+where
+    T: RealGamma,
+{
+    x.gammasgn()
 }
 
 macro_rules! float_realgamma_impl {
@@ -152,6 +202,28 @@ macro_rules! float_realgamma_impl {
 
                 q
             }
+
+            fn gammasgn(self) -> Self {
+                if self > 0.0 {
+                    return 1.0;
+                }
+                if self == 0.0 {
+                    return 0.0;
+                }
+
+                let q = self.abs();
+                let p = q.floor();
+                if p == q {
+                    return 0.0;
+                }
+
+                if (p as usize) % 2 == 1 {
+                    1.0
+                } else {
+                    -1.0
+                }
+
+            }
         }
     )*)
 }
@@ -231,5 +303,25 @@ mod tests {
         assert_almost_eq!(gammaln(14.5), 23.8627658416890849, PRECISION); // Taken from Wolframalpha
         assert_almost_eq!(gammaln(150.0 + 1.0e-12), 600.0094705553324354, PRECISION);
         // Taken from Wolframalpha
+    }
+
+    #[test]
+    fn test_gammasgn() {
+        for i in 1..20 {
+            assert_eq!((i as f32).gammasgn(), 1.0);
+            assert_eq!((i as f32 + 0.5).gammasgn(), 1.0);
+            assert_eq!((i as f32 + 0.25).gammasgn(), 1.0);
+        }
+        // Should be negative
+        assert_eq!(gammasgn(-0.5), -1.0);
+        assert_eq!(gammasgn(-2.5), -1.0);
+        assert_eq!(gammasgn(-4.5), -1.0);
+        assert_eq!(gammasgn(-6.5), -1.0);
+
+        // Should be positive
+        assert_eq!(gammasgn(-1.5), 1.0);
+        assert_eq!(gammasgn(-3.5), 1.0);
+        assert_eq!(gammasgn(-5.5), 1.0);
+        assert_eq!(gammasgn(-7.5), 1.0);
     }
 }

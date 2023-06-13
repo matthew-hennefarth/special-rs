@@ -18,12 +18,9 @@
 
 //! Various important physical and mathematical constants.
 //!
-//! Includes all standard library constants, but includes additional
-//! important quantities.
+//! Values are taken primarily from the On-Line Encyclopedia of Integer Sequences ([OEIS]) and implemented for both `f64` and `f32` types. Some constants may overlap with those in the standard library but are present here to reduce dependence on the standard library.
 //!
-//! - $\sqrt{\tau}$
-//! - $\sqrt{\pi}$
-//! - $\ln{\pi}$
+//! [OEIS]: https://oeis.org/
 
 pub mod f64 {
     //! Extended mathematical constants for the `f64` double-precision
