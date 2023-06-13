@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn};
+use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn, r_rgamma};
 
 /// Implementation of the Gamma and related functions for both real and complex-valued inputs.
 pub trait Gamma {
@@ -119,6 +119,17 @@ pub trait Gamma {
     ///
     /// [gamma]: crate::special::Gamma::gamma()
     fn gammasgn(self) -> Self;
+
+    /// Reciprocal of the [gamma] function
+    /// $$
+    /// \frac{1}{\Gamma(z)}
+    /// $$
+    /// ## Notes
+    /// Since the [gamma] function is never zero, this is a well-defined function. Where $\Gamma(z)$ is undefined (negative integers and $0$), we return `0.0`. The implementation here is based off of the [cephes implementation] in the Scipy package.
+    ///
+    /// [gamma]: crate::special::Gamma::gamma()
+    /// [cephes implementation]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/rgamma.c
+    fn rgamma(self) -> Self;
 }
 
 /// Gamma function evaluated at $z$.
@@ -192,8 +203,13 @@ macro_rules! float_gamma_impl {
                 r_gammaln(self)
             }
 
+            #[inline(always)]
             fn gammasgn(self) -> Self {
                 r_gammasgn(self)
+            }
+
+            fn rgamma(self) -> Self {
+                r_rgamma(self)
             }
         }
     )*)

@@ -78,7 +78,7 @@ pub(crate) trait RealGammaConsts: Sized {
     const MIN_USE_SMALL: Self;
 }
 
-macro_rules! impl_realgammaconsts_coefficients {
+macro_rules! impl_realgammaconsts {
     ($($T: ty)*) => ($(
         impl RealGammaConsts for $T {
             const MIN_TO_USE_STIRLING: Self = 33.0;
@@ -108,7 +108,7 @@ macro_rules! impl_realgammaconsts_coefficients {
 )*)
 }
 
-impl_realgammaconsts_coefficients! {f32 f64}
+impl_realgammaconsts! {f32 f64}
 
 /// What to return if we are at a singularity of the real-valued Gamma function
 #[inline(always)]

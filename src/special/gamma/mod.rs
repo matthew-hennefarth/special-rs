@@ -20,14 +20,16 @@
 
 mod gamma_trait;
 mod gamma_util;
-mod r_gamma;
-mod r_gammaln;
-mod r_gammasgn;
 
 pub use gamma_trait::*;
 use gamma_util::*;
 
-// Real-valued implementations
+mod r_gamma;
+mod r_gammaln;
+mod r_gammasgn;
+mod r_rgamma;
+
 use r_gamma::*;
 use r_gammaln::*;
 use r_gammasgn::*;
+use r_rgamma::*;
