@@ -16,11 +16,11 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
+use crate::special::gamma::{euler_reflection_prefactor, eval_poly};
 use crate::traits::FloatConstants;
 use num_traits::{Float, FloatConst, Zero};
-use std::ops::{Add, Mul};
 
-/// Implementation of the Gamma and related functions
+/// Implementation of the Gamma and related functions for both real and complex-valued inputs.
 pub trait Gamma {
     /// The Gamma function.
     ///
@@ -28,15 +28,12 @@ pub trait Gamma {
     /// $$
     /// \Gamma(z) = \int^{\infty}_0 t^{z-1}e^{-t}dt
     /// $$
-    /// where $\Re (z) > 0$. It is defined for the entire complex plane
-    /// through analytic continuation. It is a generalization of the
+    /// where $\Re (z) > 0$. It is defined for the entire complex plane through analytic continuation. It is a generalization of the
     /// [factorial] function to integer values.
     /// $$
     /// \Gamma(n+1) = n!
     /// $$
-    /// For a more thorough explanation of the Gamma function and all of its
-    /// properties, it is recommended to read through the [DLMF] or [wiki]
-    /// page.
+    /// For a more thorough explanation of the Gamma function and all of its properties, it is recommended to read through the [DLMF] or [wiki] page.
     ///
     /// # Examples
     /// ```
@@ -46,13 +43,11 @@ pub trait Gamma {
     /// assert!((gamma(4.5_f64) - 11.6317283).abs() <  1e-5);
     /// ```
     /// ## Notes
-    /// The implementation uses a few different methods. Firstly, for real-valued arguments ($z=x$) and
-    /// $|x| > 33$, then we utilize the Stirling series which is given by
+    /// The implementation uses a few different methods. Firstly, for real-valued arguments ($z=x$) and $|x| > 33$, then we utilize the Stirling series which is given by
     /// $$
     /// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^x \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \frac{139}{51840 x^3} - \frac{571}{2488320 x^4} + \ldots \right)
     /// $$
-    /// We additionally utilize the Euler's reflection formula for the Gamma
-    /// function to relate negative values to positive values.
+    /// We additionally utilize the Euler's reflection formula for the Gamma function to relate negative values to positive values.
     /// $$
     /// \Gamma(-x)\Gamma(x) = -\frac{\pi}{x\sin\pi x}
     /// $$
@@ -60,9 +55,7 @@ pub trait Gamma {
     /// $$
     /// \Gamma(x+1) =x\Gamma(x)
     /// $$
-    /// Then we use 2 rational functions of degree 6 and 7 to approximate the
-    /// Gamma function in this interval. This implementation is based off of
-    /// the implementation of Scipy which comes from the
+    /// Then we use 2 rational functions of degree 6 and 7 to approximate the Gamma function in this interval. This implementation is based off of the implementation of Scipy which comes from the
     /// [cephes implementation].
     ///
     /// # References
@@ -76,30 +69,6 @@ pub trait Gamma {
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
     /// [factorial]: crate::special::Factorial::factorial
     fn gamma(self) -> Self;
-
-    /// Natural logarithm of the absolute vale of the [gamma] function.
-    /// $$
-    /// \ln \left|\Gamma(z)\right|
-    /// $$
-    ///
-    /// # Examples
-    /// ```
-    /// use sci_rs::special::Gamma;
-    /// assert_eq!(1.0.gammaln(), 0.0); // ln(1) = 0
-    /// assert_eq!(2.0.gammaln(), 0.0); // ln(1) = 0
-    /// assert!((14.5_f64.gammaln() - 23.86276584168908_f64).abs() < 1e-10 );
-    /// ```
-    ///
-    /// ## Notes
-    /// Implementation is taken from the [cephes implementation] in the
-    /// Scipy package.
-    ///
-    /// # References
-    /// - [cephes implementation]
-    ///
-    /// [gamma]: crate::special::gamma()
-    /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
-    fn gammaln(self) -> Self;
 }
 
 /// Gamma function evaluated at $z$.
@@ -121,24 +90,6 @@ where
     T: Gamma,
 {
     z.gamma()
-}
-
-/// Natural log of the Gamma function evaluated at $z$.
-///
-/// Has the same semantics as [gammaln] in the [Gamma trait].
-///
-/// # Examples
-/// ```
-/// use sci_rs::special::{Gamma, gammaln};
-/// assert_eq!(14.5_f64.gammaln(), gammaln(14.5_f64));
-/// ```
-/// [gammaln]: crate::special::Gamma::gammaln
-/// [Gamma trait]: crate::special::Gamma
-pub fn gammaln<T>(x: T) -> T
-where
-    T: Gamma,
-{
-    x.gammaln()
 }
 
 macro_rules! float_gamma_impl {
@@ -241,118 +192,11 @@ macro_rules! float_gamma_impl {
 
                 z * p / q
             }
-
-            fn gammaln(self) -> Self {
-                fn gammaln_singularity() -> $T {
-                    return <$T>::INFINITY;
-                }
-                if self < -34.0 {
-                    // Utilize Euler reflection and compute gammaln at positive value.
-                    let x_positive = -self;
-                    let p = x_positive.floor();
-                    if p == x_positive {
-                        return gammaln_singularity();
-                    }
-
-                    let z = euler_reflection_prefactor(x_positive, p);
-                    if z == Self::zero() {
-                        return gammaln_singularity();
-                    }
-                    return Self::LOG_PI() - z.ln() - x_positive.gammaln();
-                }
-
-                if self < 13.0 {
-                    let mut z = 1.0;
-                    let mut x = self;
-
-                    while x >= 3.0 {
-                        x -= 1.0;
-                        z *= x;
-                    }
-
-                    while x < 2.0 {
-                        if x.is_zero() {
-                            return gammaln_singularity();
-                        }
-                        z /= x;
-                        x += 1.0;
-                    }
-                    z = z.abs();
-                    if x == 2.0 {
-                        return z.ln();
-                    }
-
-                    x -= 2.0;
-                    const B: [$T; 6] = [
-                        -1.37825152569120859100E3,
-                        -3.88016315134637840924E4,
-                        -3.31612992738871184744E5,
-                        -1.16237097492762307383E6,
-                        -1.72173700820839662146E6,
-                        -8.53555664245765465627E5,
-                    ];
-                    const C: [$T; 7] = [
-                        1.00000000000000000000E0,
-                        -3.51815701436523470549E2,
-                        -1.70642106651881159223E4,
-                        -2.20528590553854454839E5,
-                        -1.13933444367982507207E6,
-                        -2.53252307177582951285E6,
-                        -2.01889141433532773231E6,
-                    ];
-
-                    let p = x * eval_poly(x, &B) / eval_poly(x, &C);
-                    return z.ln() + p;
-                }
-
-                let mut q = (self - 0.5) * self.ln() - self + Self::LOG_SQRT_2_PI();
-                if (self > 1.0e8) {
-                    return q;
-                }
-                let p = 1.0/(self * self);
-                if self >= 1.0e3 {
-                    q += ((7.9365079365079365079365e-4 * p
-                        - 2.7777777777777777777778e-3) * p
-	                    + 0.0833333333333333333333) / self;
-                } else {
-                    const A: [$T; 5] = [
-                        8.11614167470508450300E-4,
-                        -5.95061904284301438324E-4,
-                        7.93650340457716943945E-4,
-                        -2.77777777730099687205E-3,
-                        8.33333333333331927722E-2
-                    ];
-                    q += eval_poly(p, &A) / self;
-                }
-
-                q
-            }
         }
     )*)
 }
 
 float_gamma_impl! {f32 f64}
-
-/// Evaluate an $n$-degree polynomial at a specific value $x$.
-///
-/// Evaluates an $n$-degree polynomial where the coefficients are in
-/// reversed order. That is if $\text{coeffs}\[i\] = c_i$, then evaluate
-/// $$
-/// c_0x^n + c_1x^{n-1} + \ldots + c_n
-/// $$
-fn eval_poly<T>(x: T, coeffs: &[T]) -> T
-where
-    T: Copy + Zero + Mul<Output = T>,
-    <T as Mul>::Output: Add<T>,
-{
-    match coeffs.len() {
-        0 => T::zero(),
-        1 => coeffs[0],
-        _ => coeffs[1..]
-            .iter()
-            .fold(coeffs[0], |result, &c| (result * x) + c),
-    }
-}
 
 /// Trait to tag types which have stirling coefficients expansions
 /// Will just be f32 and f64, but I don't want to copy and paste.
@@ -402,19 +246,6 @@ where
     T::SQRT_TAU() / x.sqrt() * prefactor * series
 }
 
-#[inline]
-fn euler_reflection_prefactor<T>(x_abs: T, x_floor: T) -> T
-where
-    T: Float + FloatConstants,
-{
-    let z = if (x_abs - x_floor) > (T::one() + T::one()).recip() {
-        (x_floor + T::one()) - x_abs
-    } else {
-        x_abs - x_floor
-    };
-    x_abs * (T::PI() * z).sin()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -422,34 +253,6 @@ mod tests {
     use crate::special::Factorial;
 
     const PRECISION: f64 = 1E-14;
-
-    #[test]
-    fn test_eval_poly() {
-        assert_eq!(eval_poly(1.0, &[1.0, 1.0]), 2.0);
-        assert_eq!(eval_poly(0.0, &[1.0, 1.0]), 1.0);
-        assert_eq!(eval_poly(2.0, &[1.0, 1.0]), 3.0);
-
-        for i in 0..10 {
-            let i = i as f64;
-            for j in 0..10 {
-                let j = j as f64;
-                assert_eq!(eval_poly(i, &[j]), j);
-                assert_eq!(eval_poly(i, &[0.0, j]), j);
-                assert_eq!(eval_poly(i, &[0.0, 0.0, j]), j);
-            }
-        }
-        assert_almost_eq!(
-            eval_poly(72.2, &[-6.42, 5.111219, 0.12]),
-            -33097.2827882,
-            PRECISION
-        );
-
-        assert_almost_eq!(
-            eval_poly(-6.124, &[0.615, -2.801, 0.837, -4.701, 7.357]),
-            1575.84328434321037,
-            PRECISION
-        );
-    }
 
     #[test]
     fn test_stirlings_series() {
@@ -568,73 +371,5 @@ mod tests {
             3.8089226376496421386707466577615064443807882167327097140e+260,
             1e248
         );
-    }
-
-    #[test]
-    fn test_gammaln() {
-        for i in 1..10 {
-            assert_almost_eq!(
-                gammaln(i as f64),
-                ((i - 1).factorial() as f64).ln(),
-                PRECISION
-            );
-            assert_eq!(gammaln(-i as f64), f64::INFINITY);
-        }
-
-        // Evaluated at Rationals
-        assert_almost_eq!(
-            gammaln(1.0 / 3.0),
-            0.985420646927767069187174036977,
-            PRECISION
-        ); // OEIS: A256165
-        assert_almost_eq!(gammaln(0.25), 1.28802252469807745737061044021, PRECISION); // OEIS: A256166
-        assert_almost_eq!(gammaln(0.20), 1.52406382243078452488105649392, PRECISION); // OEIS: A256167
-        assert_almost_eq!(
-            gammaln(1.0 / 6.0),
-            1.71673343507824046052784630958,
-            PRECISION
-        ); // OEIS: A255888
-        assert_almost_eq!(
-            gammaln(1.0 / 7.0),
-            1.87916927159583583645595640934,
-            PRECISION
-        ); // OEIS: A256609
-        assert_almost_eq!(
-            gammaln(1.0 / 8.0),
-            2.01941835755379634532029052116,
-            PRECISION
-        ); // OEIS: 255306
-        assert_almost_eq!(
-            gammaln(1.0 / 9.0),
-            2.14273180037669310488040788489,
-            PRECISION
-        ); // OEIS: A256610
-        assert_almost_eq!(gammaln(0.1), 2.25271265173420595986970164636, PRECISION); // OEIS: A256612
-        assert_almost_eq!(
-            gammaln(1.0 / 11.0),
-            2.35193461079879276046368095764,
-            PRECISION
-        ); // OEIS: A256611
-        assert_almost_eq!(
-            gammaln(1.0 / 12.0),
-            2.44229731118288975091554935219,
-            PRECISION
-        ); // OEIS: A256066
-
-        // Other important
-        assert_almost_eq!(
-            gammaln(f64::PI().recip()),
-            1.03364612576558270648553745533,
-            PRECISION
-        ); // OEIS: A257957
-
-        assert_almost_eq!(gammaln(12.5), 18.73434751193644570163, PRECISION);
-        assert_almost_eq!(gammaln(13.34), 20.8506330413774776, PRECISION);
-        assert_almost_eq!(gammaln(-34.5), -89.2102003799689880, 1e-13); // Taken from Wolframalpha
-        assert_almost_eq!(gammaln(-40.2), -109.3852746800507908, 1e-13); // Taken from Wolframalpha
-        assert_almost_eq!(gammaln(13.5), 21.2600761562447011, PRECISION); // Taken from Wolframalpha
-        assert_almost_eq!(gammaln(14.5), 23.8627658416890849, PRECISION); // Taken from Wolframalpha
-        assert_almost_eq!(gammaln(150.0 + 1.0e-12), 600.0094705553324354, PRECISION);
-        // Taken from Wolframalpha
     }
 }
