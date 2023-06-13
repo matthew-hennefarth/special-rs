@@ -124,8 +124,24 @@ pub trait Gamma {
     /// $$
     /// \frac{1}{\Gamma(z)}
     /// $$
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Gamma;
+    /// assert_eq!(1.5.rgamma(), 1.0/(1.5.gamma()));
+    /// assert_eq!((-2.0).rgamma(), 0.0);
+    /// assert_eq!((4.0).rgamma(), 1.0/(4.0.gamma())); // Should be 1/24
+    /// ```
+    ///
     /// ## Notes
     /// Since the [gamma] function is never zero, this is a well-defined function. Where $\Gamma(z)$ is undefined (negative integers and $0$), we return `0.0`. The implementation here is based off of the [cephes implementation] in the Scipy package.
+    ///
+    /// ## Implementation Details for Real-Valued Arguments
+    /// Like the [cephes implementation], we use a Chebyshev series to order 16 to approximate values between $(0,1)$. For values outside this region, but $|x| < 34$, we use recursion to move the value into this interval. For $|x| > 34$, we use
+    /// $$
+    /// \frac{1}{\Gamma(x)} = e^{-\ln\Gamma(x)}
+    /// $$
+    /// and the appropriate reflection for negative values. Of course, overflow and underflows may occur for large enough values despite the function not having any singularities.
     ///
     /// [gamma]: crate::special::Gamma::gamma()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/rgamma.c
@@ -164,11 +180,11 @@ where
 /// ```
 /// [gammaln]: crate::special::Gamma::gammaln
 /// [Gamma trait]: crate::special::Gamma
-pub fn gammaln<T>(x: T) -> T
+pub fn gammaln<T>(z: T) -> T
 where
     T: Gamma,
 {
-    x.gammaln()
+    z.gammaln()
 }
 
 /// Sign of the Gamma function.
@@ -183,11 +199,32 @@ where
 ///
 /// [gammasgn]: crate::special::Gamma::gammasgn
 /// [Gamma trait]: crate::special::Gamma
-pub fn gammasgn<T>(x: T) -> T
+pub fn gammasgn<T>(z: T) -> T
 where
     T: Gamma,
 {
-    x.gammasgn()
+    z.gammasgn()
+}
+
+/// Reciprocal of the Gamma function.
+///
+/// Has the same semantics as [rgamma] in the [Gamma trait].
+///
+/// # Examples
+/// ```
+/// use sci_rs::special::{Gamma, rgamma};
+/// assert_eq!(rgamma(1.5), 1.0/(1.5.gamma()));
+/// assert_eq!(rgamma(-2.0), 0.0);
+/// assert_eq!(rgamma(4.0), 4.0.rgamma()); // Should be 1/24
+/// ```
+///
+/// [rgamma]: crate::special::Gamma::rgamma
+/// [Gamma trait]: crate::special::Gamma
+pub fn rgamma<T>(z: T) -> T
+where
+    T: Gamma,
+{
+    z.rgamma()
 }
 
 macro_rules! float_gamma_impl {
