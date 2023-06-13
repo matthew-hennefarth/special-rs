@@ -16,9 +16,6 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::constants;
-use num_traits::FloatConst;
-
 macro_rules! constant {
     ($( $method:ident () -> $ret:expr ; )*)
         => {$(
@@ -32,35 +29,37 @@ macro_rules! constant {
 macro_rules! float_const_impl {
     ($(#[$doc:meta] $constant:ident,)+) => (
         #[allow(non_snake_case)]
-        /// Numeric traits for floating points which implement constant
-        /// values from [crate::constants].
+        /// Numeric traits for floating points which implement constant values from [crate::constants].
         ///
-        /// Extends the usage of [num_traits::FloatConst] to the
-        /// additional constants in the [sci_rs] library.
+        /// Different implementation of the [num_traits::FloatConst] trait to include the additional constants in the [sci_rs] library.
         ///
         /// [sci_rs]: crate
-        pub trait FloatConstants: FloatConst {
+        pub trait FloatSciConst {
             $(#[$doc] fn $constant() -> Self;)+
         }
         float_const_impl! { @float f32, $($constant,)+ }
         float_const_impl! { @float f64, $($constant,)+ }
     );
     (@float $T:ident, $($constant:ident,)+) => (
-        impl FloatConstants for $T {
+        impl FloatSciConst for $T {
             constant! {
-                $( $constant() -> constants::$T::$constant; )+
+                $( $constant() -> crate::constants::$T::$constant; )+
             }
         }
     );
 }
 
 float_const_impl! {
-    #[doc = "Return $\\sqrt{\\tau}$"]
+    #[doc = "Returns $\\sqrt{\\tau}$"]
     SQRT_TAU,
-    #[doc = "Return $\\sqrt{\\pi}$"]
+    #[doc = "Returns $\\sqrt{\\pi}$"]
     SQRT_PI,
-    #[doc = "Return $\\ln{\\pi}$"]
+    #[doc = "Returns $\\ln{\\pi}$"]
     LOG_PI,
-    #[doc= "Return $\\ln\\sqrt{2\\pi}$"]
+    #[doc= "Returns $\\ln\\sqrt{2\\pi}$"]
     LOG_SQRT_2_PI,
+    #[doc= "Returns $\\pi$"]
+    PI,
+    #[doc= "Returns Euler's number $e$"]
+    E,
 }

@@ -17,10 +17,11 @@
 //**********************************************************************
 
 use crate::special::gamma::{euler_reflection_prefactor, eval_poly};
-use crate::traits::FloatConstants;
+use crate::special::Gamma;
+use crate::traits::FloatSciConst;
 
 /// Gamma related functions which only accept real-valued arguments.
-pub trait RealGamma {
+pub trait RealGamma: Gamma {
     /// Natural logarithm of the absolute vale of the [gamma] function.
     /// $$
     /// \ln \left|\Gamma(x)\right|
@@ -161,7 +162,6 @@ float_realgamma_impl! {f32 f64}
 mod tests {
     use super::*;
     use crate::special::Factorial;
-    use num_traits::FloatConst;
 
     const PRECISION: f64 = 1E-14;
 

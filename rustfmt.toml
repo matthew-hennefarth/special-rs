@@ -1,2 +1,4 @@
 indent_syle = "Visual"
+use_field_init_shorthand = true
 short_array_element_width_threshold = 20
+tab_spaces = 4

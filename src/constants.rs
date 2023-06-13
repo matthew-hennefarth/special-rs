@@ -29,7 +29,19 @@ pub mod f64 {
     //! Extended mathematical constants for the `f64` double-precision
     //! floating point type.
 
-    pub use std::f64::consts::*;
+    /// Euler's number $e$
+    ///
+    /// Sometimes called Napier's constant. Value taken from OEIS: [A001113]
+    ///
+    /// [A001113]: https://oeis.org/A001113
+    pub const E: f64 = 2.71828182845904523536028747135_f64;
+
+    /// Archimedes's constant $\pi$
+    ///
+    /// Value taken from OEIS: [A000796]
+    ///
+    /// [A000796]: https://oeis.org/A000796
+    pub const PI: f64 = 3.14159265358979323846264338327_f64;
 
     /// $\sqrt{2\pi} = \sqrt{\tau}$
     ///
@@ -64,7 +76,19 @@ pub mod f32 {
     //! Extended mathematical constants for the `f32` double-precision
     //! floating point type.
 
-    pub use std::f32::consts::*;
+    /// Euler's number $e$
+    ///
+    /// Sometimes called Napier's constant. Value taken from OEIS: [A001113]
+    ///
+    /// [A001113]: https://oeis.org/A001113
+    pub const E: f32 = 2.71828182845904523536028747135_f32;
+
+    /// Archimedes's constant $\pi$
+    ///
+    /// Value taken from OEIS: [A000796]
+    ///
+    /// [A000796]: https://oeis.org/A000796
+    pub const PI: f32 = 3.14159265358979323846264338327_f32;
 
     /// $\sqrt{2\pi} = \sqrt{\tau}$
     ///

@@ -17,8 +17,8 @@
 //**********************************************************************
 
 use crate::special::gamma::{euler_reflection_prefactor, eval_poly};
-use crate::traits::FloatConstants;
-use num_traits::{Float, FloatConst, Zero};
+use crate::traits::FloatSciConst;
+use num_traits::{Float, Zero};
 
 /// Implementation of the Gamma and related functions for both real and complex-valued inputs.
 pub trait Gamma {
@@ -238,7 +238,7 @@ impl_stirseries_coefficients! {f32 f64}
 /// [A001163]: https://oeis.org/A001163
 fn stirling_series<T>(x: T) -> T
 where
-    T: Float + FloatConstants + StirlingSeriesCoefficients,
+    T: Float + FloatSciConst + StirlingSeriesCoefficients,
 {
     let series = x.recip();
     let series = T::one() + series * eval_poly(series, &T::STIR_COEFFICIENTS);

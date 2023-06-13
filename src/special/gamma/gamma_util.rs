@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::traits::FloatConstants;
+use crate::traits::FloatSciConst;
 use num_traits::{Float, Zero};
 use std::ops::{Add, Mul};
 
@@ -44,7 +44,7 @@ where
 #[inline]
 pub(crate) fn euler_reflection_prefactor<T>(x_abs: T, x_floor: T) -> T
 where
-    T: Float + FloatConstants,
+    T: Float + FloatSciConst,
 {
     let z = if (x_abs - x_floor) > (T::one() + T::one()).recip() {
         (x_floor + T::one()) - x_abs
