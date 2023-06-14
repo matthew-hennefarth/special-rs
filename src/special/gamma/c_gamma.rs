@@ -15,9 +15,7 @@
 //                                                                     *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
-use crate::special::gamma::gamma_util::{
-    euler_reflection_prefactor, eval_poly, lngamma_stirling, LnGammaStirlingConsts,
-};
+use crate::special::gamma::gamma_util::{eval_poly, lngamma_stirling, LnGammaStirlingConsts};
 use crate::traits::FloatSciConst;
 use num_complex::{Complex, ComplexFloat};
 use num_traits::{Float, FloatConst, One, Zero};
@@ -86,7 +84,7 @@ macro_rules! impl_loggammaconsts {
 impl_loggammaconsts! {f32 f64}
 
 /// Recurse upwards until we can use the stirling approximation
-fn loggamma_recurrence<T>(mut z: T) -> Complex<<T as ComplexFloat>::Real>
+fn c_lngamma_recurrence<T>(mut z: T) -> Complex<<T as ComplexFloat>::Real>
 where
     T: ComplexFloat
         + AddAssign
@@ -96,18 +94,16 @@ where
     <T as ComplexFloat>::Real: LogGammaConsts + AddAssign + FloatSciConst + LnGammaStirlingConsts,
 {
     let mut product = z;
-    let mut nsb = false;
     let mut sb = false;
     let mut signflips = T::Real::zero();
 
     z += T::one();
     while z.re() <= T::Real::MIN_USE_STIRLING {
         product *= z;
-        nsb = product.im().is_sign_negative();
-        if nsb && !sb {
+        if product.im().is_sign_negative() && !sb {
             signflips += T::Real::one();
         }
-        sb = nsb;
+        sb = product.im().is_sign_negative();
         z += T::one();
     }
 
@@ -126,7 +122,7 @@ where
 /// For $z$ close to 1 or 2, we use a Taylor expansion around 1.
 ///
 /// Based off of the SciPy implementation: https://github.com/scipy/scipy/blob/main/scipy/special/_loggamma.pxd
-pub(crate) fn c_loggamma<T>(z: T) -> Complex<<T as ComplexFloat>::Real>
+pub(crate) fn c_lngamma<T>(z: T) -> Complex<<T as ComplexFloat>::Real>
 where
     T: ComplexFloat
         + AddAssign
@@ -176,21 +172,57 @@ where
         let phase = Complex::new(phase.re(), phase.im());
 
         // Reflected
-        let partial_result = -c_loggamma(T::one() - z);
+        let partial_result = -c_lngamma(T::one() - z);
 
         return phase + partial_result + winding;
     }
 
     if !z.im().is_sign_negative() {
-        return loggamma_recurrence(z);
+        return c_lngamma_recurrence(z);
     }
-    loggamma_recurrence(z.conj()).conj()
+    c_lngamma_recurrence(z.conj()).conj()
+}
+
+pub(crate) fn c_gamma<T>(z: T) -> Complex<<T as ComplexFloat>::Real>
+where
+    T: ComplexFloat
+        + AddAssign
+        + MulAssign
+        + Add<<T as ComplexFloat>::Real, Output = T>
+        + Mul<<T as ComplexFloat>::Real, Output = T>,
+    <T as ComplexFloat>::Real: LogGammaConsts
+        + FloatSciConst
+        + LnGammaStirlingConsts
+        + LogGammaTaylorCoeffs
+        + Add<Output = <T as ComplexFloat>::Real>
+        + AddAssign,
+    Complex<<T as ComplexFloat>::Real>: Sub<T>,
+{
+    c_lngamma(z).exp()
+}
+
+pub(crate) fn c_rgamma<T>(z: T) -> Complex<<T as ComplexFloat>::Real>
+where
+    T: ComplexFloat
+        + AddAssign
+        + MulAssign
+        + Add<<T as ComplexFloat>::Real, Output = T>
+        + Mul<<T as ComplexFloat>::Real, Output = T>,
+    <T as ComplexFloat>::Real: LogGammaConsts
+        + FloatSciConst
+        + LnGammaStirlingConsts
+        + LogGammaTaylorCoeffs
+        + Add<Output = <T as ComplexFloat>::Real>
+        + AddAssign,
+    Complex<<T as ComplexFloat>::Real>: Sub<T>,
+{
+    (-c_lngamma(z)).exp()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::special::gamma::r_gammaln::r_gammaln;
+    use crate::special::gamma::r_gammaln::r_lnabsgamma;
 
     const PRECISION: f64 = 1.0e-14;
 
@@ -198,7 +230,7 @@ mod tests {
     fn test_c_loggamma() {
         // Values take from Wolframalpha
         assert_almost_eq!(
-            c_loggamma(Complex { re: 7.5, im: 0.0 }),
+            c_lngamma(Complex { re: 7.5, im: 0.0 }),
             Complex {
                 re: 7.53436423675873295515836763243,
                 im: 0.0
@@ -206,7 +238,7 @@ mod tests {
             PRECISION
         );
         assert_almost_eq!(
-            c_loggamma(Complex { re: 7.5, im: 1.0 }),
+            c_lngamma(Complex { re: 7.5, im: 1.0 }),
             Complex {
                 re: 7.46329489273832466759034022127,
                 im: 1.95012140717825057478945773428
@@ -214,15 +246,15 @@ mod tests {
             PRECISION
         );
         assert_almost_eq!(
-            c_loggamma(0.9),
+            c_lngamma(0.9),
             Complex {
-                re: r_gammaln(0.9),
+                re: r_lnabsgamma(0.9),
                 im: 0.0
             },
             PRECISION
         );
         assert_almost_eq!(
-            c_loggamma(Complex { re: 0.95, im: 0.05 }),
+            c_lngamma(Complex { re: 0.95, im: 0.05 }),
             Complex {
                 re: 0.028753589066549549997223245584,
                 im: -0.03307300849770222888977061702
@@ -232,7 +264,7 @@ mod tests {
 
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex { re: 0.0, im: 7.1 }),
+            c_lngamma(Complex { re: 0.0, im: 7.1 }),
             Complex {
                 re: -11.2137627790627281143543,
                 im: 6.0195299083889901581301
@@ -241,7 +273,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex { re: 0.0, im: -7.22 }),
+            c_lngamma(Complex { re: 0.0, im: -7.22 }),
             Complex {
                 re: -11.4106384227068478054434,
                 im: -6.2559451620947514882687
@@ -250,7 +282,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(-7.2),
+            c_lngamma(-7.2),
             Complex {
                 re: -7.2548056050797278260234,
                 im: -25.1327412287183449279837
@@ -259,7 +291,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex { re: -7.33, im: 4.3 }),
+            c_lngamma(Complex { re: -7.33, im: 4.3 }),
             Complex {
                 re: -19.7421179905029617884793,
                 im: -15.5482125579457619579671
@@ -268,7 +300,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex { re: 1.5, im: 0.5 }),
+            c_lngamma(Complex { re: 1.5, im: 0.5 }),
             Complex {
                 re: -0.2341863474703487213446,
                 im: 0.0346689612753978693149
@@ -277,7 +309,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex { re: 1.5, im: -0.5 }),
+            c_lngamma(Complex { re: 1.5, im: -0.5 }),
             Complex {
                 re: -0.2341863474703487213446,
                 im: -0.0346689612753978693149
@@ -286,7 +318,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex {
+            c_lngamma(Complex {
                 re: 140.233,
                 im: -54.21
             }),
@@ -298,7 +330,7 @@ mod tests {
         );
         // From SciPy version 1.10.1
         assert_almost_eq!(
-            c_loggamma(Complex { re: 0.0, im: 1.0 }),
+            c_lngamma(Complex { re: 0.0, im: 1.0 }),
             Complex {
                 re: -0.6509231993018549378149,
                 im: -1.8724366472624294210902
@@ -307,9 +339,9 @@ mod tests {
         );
 
         assert_almost_eq!(
-            c_loggamma(1.5),
+            c_lngamma(1.5),
             Complex {
-                re: r_gammaln(1.5),
+                re: r_lnabsgamma(1.5),
                 im: 0.0
             },
             PRECISION

@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::{r_gammaln, r_gammasgn, RealGammaLnConsts};
+use crate::special::gamma::{r_gammasgn, r_lnabsgamma, RealGammaLnConsts};
 use crate::traits::FloatSciConst;
 use num_traits::{cast, Float};
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
@@ -108,7 +108,7 @@ where
         return T::zero();
     }
 
-    r * (r_gammaln(x + m) - r_gammaln(x)).exp() * r_gammasgn(x + m) * r_gammasgn(x)
+    r * (r_lnabsgamma(x + m) - r_lnabsgamma(x)).exp() * r_gammasgn(x + m) * r_gammasgn(x)
 }
 
 #[cfg(test)]

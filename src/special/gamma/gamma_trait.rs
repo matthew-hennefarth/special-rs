@@ -16,9 +16,12 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn, r_poch, r_rgamma};
+use crate::special::gamma::{
+    c_gamma, c_lngamma, c_rgamma, r_gamma, r_gammasgn, r_lnabsgamma, r_poch, r_rgamma,
+};
 
-use num_complex::ComplexFloat;
+use num_complex::{Complex, ComplexFloat};
+use num_traits::One;
 
 /// Implementation of the Gamma and related functions for both real and complex-valued inputs.
 ///
@@ -87,9 +90,9 @@ pub trait Gamma: ComplexFloat {
     /// # Examples
     /// ```
     /// use sci_rs::special::Gamma;
-    /// assert_eq!(1.0.gammaln(), 0.0); // ln(1) = 0
-    /// assert_eq!(2.0.gammaln(), 0.0); // ln(1) = 0
-    /// assert!((14.5_f64.gammaln() - 23.86276584168908_f64).abs() < 1e-10 );
+    /// assert_eq!(1.0.lnabsgamma(), 0.0); // ln(1) = 0
+    /// assert_eq!(2.0.lnabsgamma(), 0.0); // ln(1) = 0
+    /// assert!((14.5_f64.lnabsgamma() - 23.86276584168908_f64).abs() < 1e-10 );
     /// ```
     ///
     /// ## Notes
@@ -101,7 +104,34 @@ pub trait Gamma: ComplexFloat {
     /// [gamma]: crate::special::Gamma::gamma()
     /// [gammasgn]: crate::special::Gamma::gammasgn()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
-    fn gammaln(self) -> Self;
+    fn lnabsgamma(self) -> Self;
+
+    /// Principle branch of the natural log of the Gamma function.
+    /// $$
+    /// \ln\Gamma(z)
+    /// $$
+    /// The function has a single branch cut on the negative real axis.
+    ///
+    /// # Examples
+    /// Real-valued inputs must be greater than $0.0$.
+    /// ```
+    /// use sci_rs::special::Gamma;
+    /// assert_eq!(1.0.lngamma(), 0.0);
+    /// assert_eq!(1.5.lngamma(), 1.5.lnabsgamma());
+    /// assert!((-1.5_f32).lngamma().is_nan()); // Result would be imaginary
+    /// ```
+    /// To get a number, they must be explicitly cast to a complex number.
+    /// ```
+    /// use sci_rs::special::Gamma;
+    /// use num_complex::Complex32;
+    /// // We have to explicitly cast negative real numbers to complex-values.
+    /// println!("{}", Complex32{re: -1.5, im: 0.0}.lngamma()); // 0.8600 - 6.283j
+    /// println!("{}", Complex32{re: 0.0, im: 1.0}.lngamma()); // -0.6509 - 1.872j
+    /// ```
+    ///
+    /// ## Notes
+    /// Implementation is based on that from the SciPy (v1.10.1) package. For real-valued arguments, returns `NaN` when $x \leq 0.0$ since the log of a negative number is complex-valued.
+    fn lngamma(self) -> Self;
 
     /// Sign of the [gamma] function.
     ///
@@ -203,22 +233,56 @@ where
     z.gamma()
 }
 
-/// Natural log of the Gamma function evaluated at $z$.
+/// Natural log of the absolute value of the Gamma function evaluated at $z$.
 ///
-/// Has the same semantics as [gammaln] in the [Gamma trait].
+/// Has the same semantics as [lnabsgamma] in the [Gamma trait].
 ///
 /// # Examples
 /// ```
-/// use sci_rs::special::{Gamma, gammaln};
-/// assert_eq!(14.5_f64.gammaln(), gammaln(14.5_f64));
+/// use sci_rs::special::{Gamma, lnabsgamma};
+/// assert_eq!(14.5_f64.lnabsgamma(), lnabsgamma(14.5_f64));
 /// ```
-/// [gammaln]: crate::special::Gamma::gammaln
+/// [lnabsgamma]: crate::special::Gamma::lnabsgamma
 /// [Gamma trait]: crate::special::Gamma
-pub fn gammaln<T>(z: T) -> T
+pub fn lnabsgamma<T>(z: T) -> T
 where
     T: Gamma,
 {
-    z.gammaln()
+    z.lnabsgamma()
+}
+
+/// Principle branch of the natural log of the Gamma function.
+///
+/// Has the same semantics as [lngamma] in the [Gamma trait].
+///
+/// # Examples
+/// Real-valued inputs must be positive or else it will return `NaN`.
+/// ```
+/// use sci_rs::special::{Gamma, lngamma};
+/// assert_eq!(2.5.lngamma(), lngamma(2.5));
+/// assert!(lngamma(-1.5_f32).is_nan());
+/// ```
+/// Instead, explicitly cast to a complex number.
+/// ```
+/// use sci_rs::special::{Gamma, lngamma};
+/// use num_complex::Complex32;
+/// let z = Complex32{re: -1.5, im: 0.0}; // -1.5
+/// assert_eq!(z.lngamma(), lngamma(z)); // 0.8600 - 6.283j
+/// ```
+/// For general complex numbers:
+/// ```
+/// use sci_rs::special::{Gamma, lngamma};
+/// use num_complex::Complex32;
+/// let z = Complex32{re: 1.24, im: -0.4}; // 1.24 - 0.4 j
+/// assert_eq!(z.lngamma(), lngamma(z));
+/// ```
+/// [lngamma]: crate::special::Gamma::lngamma
+/// [Gamma trait]: crate::special::Gamma
+pub fn lngamma<T>(z: T) -> T
+where
+    T: Gamma,
+{
+    z.lngamma()
 }
 
 /// Sign of the Gamma function.
@@ -290,8 +354,16 @@ macro_rules! float_gamma_impl {
             }
 
             #[inline(always)]
-            fn gammaln(self) -> Self {
-                r_gammaln(self)
+            fn lnabsgamma(self) -> Self {
+                r_lnabsgamma(self)
+            }
+
+            #[inline(always)]
+            fn lngamma(self) -> Self {
+                if self < 0.0 {
+                    return Self::NAN;
+                }
+                self.lnabsgamma()
             }
 
             #[inline(always)]
@@ -299,10 +371,12 @@ macro_rules! float_gamma_impl {
                 r_gammasgn(self)
             }
 
+            #[inline(always)]
             fn rgamma(self) -> Self {
                 r_rgamma(self)
             }
 
+            #[inline(always)]
             fn poch(self, m: Self) -> Self {
                 r_poch(self, m)
             }
@@ -311,3 +385,42 @@ macro_rules! float_gamma_impl {
 }
 
 float_gamma_impl! {f32 f64}
+
+macro_rules! float_complexgamma_impl {
+    ($($T: ty)*) => ($(
+        impl Gamma for Complex<$T> {
+            #[inline(always)]
+            fn gamma(self) -> Self {
+                c_gamma(self)
+            }
+
+            #[inline(always)]
+            fn lnabsgamma(self) -> Self {
+                todo!();
+            }
+
+            #[inline(always)]
+            fn lngamma(self) -> Self {
+                c_lngamma(self)
+            }
+
+            #[inline(always)]
+            fn gammasgn(self) -> Self {
+                assert_eq!(self.im(), 0.0, "gammasgn only defined for real-values");
+                Self::one() * r_gammasgn(self.re())
+            }
+
+            #[inline(always)]
+            fn rgamma(self) -> Self {
+                c_rgamma(self)
+            }
+
+            #[inline(always)]
+            fn poch(self, _m: Self) -> Self {
+                todo!();
+            }
+        }
+    )*)
+}
+
+float_complexgamma_impl! {f32 f64}
