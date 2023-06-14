@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn, r_rgamma};
+use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn, r_poch, r_rgamma};
 
 /// Implementation of the Gamma and related functions for both real and complex-valued inputs.
 pub trait Gamma {
@@ -86,7 +86,7 @@ pub trait Gamma {
     /// ```
     ///
     /// ## Notes
-    /// Implementation is taken from the [cephes implementation] in the Scipy package.
+    /// Implementation is based on the [cephes implementation] in the Scipy package.
     ///
     /// # References
     /// - [cephes implementation]
@@ -104,7 +104,7 @@ pub trait Gamma {
     /// -1.0 & \Gamma(x) < 0
     /// \end{cases}
     /// $$
-    /// The [gamma] function is never zero and so this is a well-defined function on the gamma function domain.
+    /// The [gamma] function, for real-valued arguments $x$, is never zero and so this is a well-defined function. This is not well defined for complex-values arguments though.
     ///
     /// # Examples
     /// ```
@@ -146,6 +146,33 @@ pub trait Gamma {
     /// [gamma]: crate::special::Gamma::gamma()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/rgamma.c
     fn rgamma(self) -> Self;
+
+    /// Pochhammer symbol
+    ///
+    /// The Pochhammer symbol is defined as
+    /// $$
+    /// z^{(m)} = \frac{\Gamma(z + m)}{\Gamma(z)}
+    /// $$
+    /// This is a generalization of the rising factorial which, for non-negative integers $n$ and $m$ is
+    /// $$
+    /// n^{(m)} = n(n+1)(n+2)\ldots(n+m-1) = \prod_{k = 1}^{m} (n+k-1)
+    /// $$
+    /// See the [dlmf] or [wiki] page for more details.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Gamma;
+    /// assert_eq!(2.0.poch(2.0), 4.0.gamma()/2.0.gamma());
+    /// assert!(((-1.5_f32).poch(0.25) - (-1.25).gamma()/(-1.5).gamma()).abs() < 1e-6);
+    /// ```
+    ///
+    /// ## Notes
+    /// The real-value implementation here is based on that from the [cephes] library.
+    ///
+    /// [dlmf]: https://dlmf.nist.gov/5.2#iii
+    /// [wiki]: https://en.wikipedia.org/wiki/Falling_and_rising_factorials
+    /// [cephes]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/poch.c
+    fn poch(self, m: Self) -> Self;
 }
 
 /// Gamma function evaluated at $z$.
@@ -227,6 +254,26 @@ where
     z.rgamma()
 }
 
+/// Pochhammer symbol
+///
+/// Has the same semantics as [poch] in the [Gamma trait].
+///
+/// # Examples
+/// ```
+/// use sci_rs::special::{Gamma, poch};
+/// assert_eq!(poch(2.0, 3.0), 2.0.poch(3.0));
+/// assert_eq!(poch(-1.5, -0.22), (-1.5).poch(-0.22));
+/// ```
+///
+/// [poch]: crate::special::Gamma::poch
+/// [Gamma trait]: crate::special::Gamma
+pub fn poch<T>(z: T, m: T) -> T
+where
+    T: Gamma,
+{
+    z.poch(m)
+}
+
 macro_rules! float_gamma_impl {
     ($($T: ty)*) => ($(
         impl Gamma for $T {
@@ -247,6 +294,10 @@ macro_rules! float_gamma_impl {
 
             fn rgamma(self) -> Self {
                 r_rgamma(self)
+            }
+
+            fn poch(self, m: Self) -> Self {
+                r_poch(self, m)
             }
         }
     )*)

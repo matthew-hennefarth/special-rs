@@ -24,12 +24,15 @@ mod gamma_util;
 pub use gamma_trait::*;
 use gamma_util::*;
 
+// Functions which assume a real-valued input
 mod r_gamma;
 mod r_gammaln;
 mod r_gammasgn;
+mod r_poch;
 mod r_rgamma;
 
 use r_gamma::*;
 use r_gammaln::*;
 use r_gammasgn::*;
+use r_poch::*;
 use r_rgamma::*;
