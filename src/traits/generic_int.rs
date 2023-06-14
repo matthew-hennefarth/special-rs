@@ -1,3 +1,7 @@
+//**********************************************************************
+// This file is part of Sci-rs                                         *
+// Copyright 2023 Matthew R. Hennefarth                                *
+//**********************************************************************
 use num_traits::{PrimInt, Signed};
 
 /// Allows me to know if a number is negative irregardless of signed or
