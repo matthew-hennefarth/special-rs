@@ -41,7 +41,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(5.choose(2), 10);
     /// assert_eq!(7.choose(3), 35);
     /// ```
-    /// ## Notes
+    /// # Notes
     /// When $n$ < 0 or $k<0$ or $n<k$, the $0$ is returned.
     ///
     /// ## Implementation
@@ -82,7 +82,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(10.choose_rep(3), 220);
     /// ```
     ///
-    /// ## Notes
+    /// # Notes
     /// When $n$ < 0 or $k<0$ or $n<k$, then $0$ is returned.
     ///
     /// # References
@@ -119,7 +119,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(6.perm(3), 6*5*4);
     /// ```
     ///
-    /// ## Notes
+    /// # Notes
     /// When $n$ < 0 or $k<0$, then $0$ is returned.
     fn perm(self, k: Self) -> Self {
         self.checked_perm(k).unwrap()

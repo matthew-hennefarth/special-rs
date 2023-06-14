@@ -142,7 +142,7 @@ impl_stirseries_coefficients! {f32 f64}
 /// See [here](https://dlmf.nist.gov/5.11) for a detailed explanation of
 /// the Stirling series and its relationship to the Gamma function.
 ///
-/// ## Notes
+/// # Notes
 /// The implementation expands to 6th order and the coefficients are taken from OEIS: [A001164] and [A001163]
 ///
 /// [A001164]: https://oeis.org/A001164

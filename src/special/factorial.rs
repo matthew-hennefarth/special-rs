@@ -53,7 +53,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(3_isize.factorial(), 6);
     /// assert_eq!(5_isize.factorial(), 120);
     /// ```
-    /// ## Notes
+    /// # Notes
     /// If $n < 0$ returns 0.
     fn factorial(self) -> Self {
         self.checked_factorial().unwrap()
@@ -104,7 +104,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(3_isize.factorial2(), 3);
     /// assert_eq!(6_isize.factorial2(), 48);
     /// ```
-    /// ## Notes
+    /// # Notes
     /// If $n < 0$ returns 0.
     fn factorial2(self) -> Self {
         self.checked_factorial2().unwrap()
@@ -147,7 +147,7 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// assert_eq!(5.factorialk(3), 10); // 5 * 2
     /// assert_eq!(10.factorialk(5), 50); // 10 * 5
     /// ```
-    /// ## Notes
+    /// # Notes
     /// If $n < 0$ returns 0.
     ///
     /// [factorial]: crate::special::Factorial::factorial

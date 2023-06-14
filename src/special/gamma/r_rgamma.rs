@@ -16,7 +16,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::r_lnabsgamma;
+use crate::special::gamma::r_lgamma;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
 use crate::special::gamma::gamma_util::{euler_reflection_prefactor, eval_cheby};
@@ -83,11 +83,11 @@ where
     }
 
     if x > T::MIN_VALUE_FOR_EXP {
-        return (-r_lnabsgamma(x)).exp();
+        return (-r_lgamma(x)).exp();
     }
 
     if x < -T::MIN_VALUE_FOR_EXP {
-        let y = r_lnabsgamma(-x) - euler_reflection_prefactor(x).abs().ln();
+        let y = r_lgamma(-x) - euler_reflection_prefactor(x).abs().ln();
         return r_gammasgn(x) * y.exp();
     }
 

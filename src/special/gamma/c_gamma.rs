@@ -222,7 +222,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::special::gamma::r_gammaln::r_lnabsgamma;
+    use crate::special::gamma::r_lgamma;
 
     const PRECISION: f64 = 1.0e-14;
 
@@ -248,7 +248,7 @@ mod tests {
         assert_almost_eq!(
             c_lngamma(0.9),
             Complex {
-                re: r_lnabsgamma(0.9),
+                re: r_lgamma(0.9),
                 im: 0.0
             },
             PRECISION
@@ -341,7 +341,7 @@ mod tests {
         assert_almost_eq!(
             c_lngamma(1.5),
             Complex {
-                re: r_lnabsgamma(1.5),
+                re: r_lgamma(1.5),
                 im: 0.0
             },
             PRECISION
