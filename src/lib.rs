@@ -23,11 +23,13 @@
 //!
 //! [SciPy]: https://scipy.org/
 
+use num_complex::ComplexFloat;
+
 // TODO put into some precision module file, then remove the warnings
 #[allow(dead_code)]
-fn is_close<T>(x: T, y: T, epsilon: T) -> bool
+fn is_close<T>(x: T, y: T, epsilon: <T as ComplexFloat>::Real) -> bool
 where
-    T: num_traits::Float,
+    T: ComplexFloat,
 {
     if x.is_finite() {
         return (x - y).abs() < epsilon;

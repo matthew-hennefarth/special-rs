@@ -36,3 +36,6 @@ use r_gammaln::*;
 use r_gammasgn::*;
 use r_poch::*;
 use r_rgamma::*;
+
+mod c_gamma;
+use c_gamma::*;

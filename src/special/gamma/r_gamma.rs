@@ -27,8 +27,7 @@ pub(crate) trait RealGammaConsts: Sized {
     const MIN_TO_USE_STIRLING: Self;
     const P: [Self; 7];
     const Q: [Self; 8];
-    const THREE: Self;
-    const TWO: Self;
+    const INTERVAL: [Self; 2];
     const MIN_USE_SMALL: Self;
 }
 
@@ -55,8 +54,7 @@ macro_rules! impl_realgammaconsts {
                 7.14304917030273074085E-2,
                 1.00000000000000000320E0,
             ];
-            const THREE: Self = 3.0;
-            const TWO: Self = 2.0;
+            const INTERVAL: [Self; 2] = [2.0, 3.0];
             const MIN_USE_SMALL: Self = 1.0E-7;
         }
 )*)
@@ -129,20 +127,20 @@ where
     let mut x = x;
     let mut z = T::one();
 
-    while x >= T::THREE {
+    while x >= T::INTERVAL[1] {
         x -= T::one();
         z *= x;
     }
-    while x < T::TWO {
+    while x < T::INTERVAL[0] {
         z /= x;
         x += T::one();
     }
 
-    if x == T::TWO {
+    if x == T::INTERVAL[0] {
         return z;
     }
 
-    x -= T::TWO;
+    x -= T::INTERVAL[0];
     let p = eval_poly(x, &T::P);
     let q = eval_poly(x, &T::Q);
 

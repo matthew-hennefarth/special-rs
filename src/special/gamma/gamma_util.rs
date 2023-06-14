@@ -203,7 +203,7 @@ where
 
     // (z - 0.5)ln(z) - z + ln(sqrt(2pi)) + (1/z)(Stirling)
     let q = (z - (T::one() + T::one()).recip()) * z.ln() - z + T::Real::LOG_SQRT_2_PI();
-    q + eval_poly(rzz, &T::Real::LNGAMMA_STIRLING_COEFFS) * rz
+    q + rz * eval_poly(rzz, &T::Real::LNGAMMA_STIRLING_COEFFS)
 }
 
 #[cfg(test)]

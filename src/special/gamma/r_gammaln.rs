@@ -93,22 +93,22 @@ where
     let mut z = T::one();
     let mut x = x;
 
-    while x >= T::THREE {
+    while x >= T::INTERVAL[1] {
         x -= T::one();
         z *= x;
     }
 
-    while x < T::TWO {
+    while x < T::INTERVAL[0] {
         z /= x;
         x += T::one();
     }
 
     // Gamma(2) = 1! = 1
-    if x == T::TWO {
+    if x == T::INTERVAL[0] {
         return z.ln();
     }
 
-    x -= T::TWO;
+    x -= T::INTERVAL[0];
     z.ln() + x * eval_poly(x, &T::B) / eval_poly(x, &T::C)
 }
 

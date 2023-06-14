@@ -86,13 +86,15 @@ where
         return r;
     }
     if x > T::MIN_FOR_EXP && m.abs() <= T::one() {
+        let two = T::one() + T::one();
+        let three = two + T::one();
         return r
             * x.powf(m)
             * (T::one()
-                + m * (m - T::one()) / (T::TWO * x)
-                + m * (m - T::one()) * (m - T::TWO) * (T::THREE * m - T::one())
+                + m * (m - T::one()) / (two * x)
+                + m * (m - T::one()) * (m - two) * (three * m - T::one())
                     / (cast::<u8, T>(24).unwrap() * x * x)
-                + m * m * (m - T::one()) * (m - T::one()) * (m - T::TWO) * (m - T::THREE)
+                + m * m * (m - T::one()) * (m - T::one()) * (m - two) * (m - three)
                     / (cast::<u8, T>(48).unwrap() * x * x * x));
     }
 
