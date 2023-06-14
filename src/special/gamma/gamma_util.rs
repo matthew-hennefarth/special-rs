@@ -20,7 +20,7 @@ use crate::traits::FloatSciConst;
 
 use num_complex::ComplexFloat;
 use num_traits::{Float, One, Zero};
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 /// Evaluate an $n$-degree polynomial at a specific value $x$.
 ///
@@ -102,6 +102,58 @@ where
     T: Float + FloatSciConst,
 {
     z * (T::PI() * z).sin()
+}
+
+/// Trait to tag types which have stirling coefficients expansions
+/// Will just be f32 and f64, but I don't want to copy and paste.
+pub(crate) trait StirlingSeriesCoefficients: Sized {
+    const STIR_COEFFICIENTS: [Self; 5];
+}
+
+macro_rules! impl_stirseries_coefficients {
+    ($($T: ty)*) => ($(
+        impl StirlingSeriesCoefficients for $T {
+            // Taken from OEIS: A001164
+            // Values pre-computed in rust
+            const STIR_COEFFICIENTS: [Self; 5] = [
+                7.84039221720066615423E-4,  // 163879/209018880
+                -2.29472093621399167830E-4, // -571/2488320
+                -2.68132716049382727186E-3, // -139/51840
+                3.47222222222222202948E-3,  // 1/288
+                8.33333333333333287074E-2,  // 1/12
+            ];
+        }
+)*)
+}
+
+impl_stirseries_coefficients! {f32 f64}
+
+/// Stirlings Formula
+///
+/// Compute the Stirling series for a given value $z$.
+/// $$
+/// \sqrt{\frac{2\pi}{z}} \left(\frac{z}{e}\right)^n \left(1 + \frac{1}{12 z} + \frac{1}{288 z^2} - \ldots \right)
+/// $$
+/// See [here](https://dlmf.nist.gov/5.11) for a detailed explanation of
+/// the Stirling series and its relationship to the Gamma function.
+///
+/// ## Notes
+/// The implementation expands to 6th order and the coefficients are taken from OEIS: [A001164] and [A001163]
+///
+/// [A001164]: https://oeis.org/A001164
+/// [A001163]: https://oeis.org/A001163
+pub(crate) fn gamma_stirling_series<T>(z: T) -> T
+where
+    T: ComplexFloat
+        + Add<<T as ComplexFloat>::Real, Output = T>
+        + Mul<<T as ComplexFloat>::Real, Output = T>
+        + Div<<T as ComplexFloat>::Real, Output = T>,
+    <T as ComplexFloat>::Real: FloatSciConst + StirlingSeriesCoefficients,
+{
+    let rz = z.recip();
+    let series = T::one() + rz * eval_poly(rz, &T::Real::STIR_COEFFICIENTS);
+    let prefactor = (z * z.ln() - z).exp();
+    prefactor * series / z.sqrt() * T::Real::SQRT_TAU()
 }
 
 /// Coefficients are
@@ -223,5 +275,38 @@ mod tests {
             38.4254039375000019,
             PRECISION
         );
+    }
+
+    #[test]
+    fn test_stirlings_series() {
+        const REFERENCE_VALUES: [f64; 10] = [
+            1.0002224601164145, 1.0000024896493827, 2.0000002868007112, 6.0000001000594825,
+            24.0000000672158009, 120.00000006770064, 720.0000000819621, 5040.0000000665805,
+            40319.99999966742, 362879.9999961068,
+        ];
+        const REFERENCE_140: f64 = 961572319694071.10E224;
+        const REFERENCE_MAXSTIR: f64 = 2919114949633263.6E230;
+        const REFERENCE_MAXSTIR_P_EPSILON: f64 = 29191294268938814.0E229;
+
+        const REFERENCE_150: f64 = 3808922637630237.0E245;
+        for i in 0..10 {
+            assert_almost_eq!(
+                gamma_stirling_series((i + 1) as f64),
+                REFERENCE_VALUES[i],
+                PRECISION
+            );
+        }
+        assert_almost_eq!(gamma_stirling_series(140.0), REFERENCE_140, PRECISION);
+        assert_almost_eq!(
+            gamma_stirling_series(143.01608),
+            REFERENCE_MAXSTIR,
+            PRECISION
+        );
+        assert_almost_eq!(
+            gamma_stirling_series(143.016081),
+            REFERENCE_MAXSTIR_P_EPSILON,
+            PRECISION
+        );
+        assert_almost_eq!(gamma_stirling_series(150.0), REFERENCE_150, PRECISION);
     }
 }
