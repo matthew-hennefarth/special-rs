@@ -42,19 +42,19 @@ pub mod f64 {
     /// [A002161]: https://oeis.org/A002161
     pub const SQRT_PI: f64 = 1.77245385090551602729816748334_f64;
 
-    /// $\ln\pi$
-    ///
-    /// Value taken from OEIS: [A053510]
-    ///
-    /// [A053510]: https://oeis.org/A053510
-    pub const LOG_PI: f64 = 1.14472988584940017414342735135_f64;
-
     /// $\ln\sqrt{2\pi}$
     ///
     /// Value taken from [Wolframalpha].
     ///
     /// [Wolframalpha]: https://www.wolframalpha.com/input?i=ln+sqrt%282pi%29%29
     pub const LOG_SQRT_2_PI: f64 = 0.91893853320467274178032973640_f64;
+
+    /// Euler-Mascheroni constant ($\gamma$)
+    ///
+    /// Value taken from OEIS: [A001620]
+    ///
+    /// [A001620]: https://oeis.org/A001620
+    pub const GAMMA: f64 = 0.577215664901532860606512090082402431042_f64;
 }
 
 pub mod f32 {
@@ -77,17 +77,17 @@ pub mod f32 {
     /// [A002161]: https://oeis.org/A002161
     pub const SQRT_PI: f32 = 1.77245385090551602729816748334_f32;
 
-    /// $\log\pi$
-    ///
-    /// Value taken from OEIS: [A053510]
-    ///
-    /// [A053510]: https://oeis.org/A053510
-    pub const LOG_PI: f32 = 1.14472988584940017414342735135_f32;
-
     /// $\ln\sqrt{2\pi}$
     ///
     /// Value taken from [Wolframalpha].
     ///
     /// [Wolframalpha]: https://www.wolframalpha.com/input?i=ln+sqrt%282pi%29%29
     pub const LOG_SQRT_2_PI: f32 = 0.91893853320467274178032973640_f32;
+
+    /// Euler-Mascheroni constant ($\gamma$)
+    ///
+    /// Value taken from OEIS: [A001620]
+    ///
+    /// [A001620]: https://oeis.org/A001620
+    pub const GAMMA: f32 = 0.577215664901532860606512090082402431042_f32;
 }

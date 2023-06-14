@@ -57,7 +57,7 @@ macro_rules! impl_realgammaconsts {
             ];
             const THREE: Self = 3.0;
             const TWO: Self = 2.0;
-            const MIN_USE_SMALL: Self = 1.0E-9;
+            const MIN_USE_SMALL: Self = 1.0E-7;
         }
 )*)
 }
@@ -74,12 +74,19 @@ where
 }
 
 /// Value of the Gamma function when |x| < `RealGammaConsts::MIN_TO_USE_SMALL`
+///
+/// We use the Laurant series of $\Gamma(z)$ around $z = 0$.
+/// $$
+/// \frac{1}{z} - \gamma + \left(\frac{\pi^2}{6} + \gamma^2\right)\frac{z}{2}
+/// $$
 #[inline(always)]
 fn r_gamma_small<T>(x: T) -> T
 where
-    T: Float,
+    T: Float + FloatSciConst,
 {
-    (x + cast::<f32, T>(0.5772156649015329).unwrap() * x * x).recip()
+    x.recip() - T::GAMMA()
+        + x / (T::one() + T::one())
+            * (T::PI() * T::PI() / cast::<f32, T>(6.0).unwrap() + T::GAMMA() * T::GAMMA())
 }
 
 /// Implementation of the `gamma()` for real-valued inputs.
@@ -148,7 +155,6 @@ mod tests {
 
     use crate::constants::f64::{PI, SQRT_PI};
     use crate::special::Factorial;
-    use num_traits::Float;
 
     const PRECISION: f64 = 1E-14;
 
@@ -158,7 +164,7 @@ mod tests {
             assert_eq!(r_gamma(i as f64), (i - 1).factorial() as f64);
             assert!(r_gamma(-i as f64).is_nan());
         }
-        assert!(r_gamma(0.0).is_nan());
+        assert!(r_gamma(0.0_f32).is_nan());
         assert!(r_gamma(f64::NAN).is_nan());
 
         // Test the half-integers

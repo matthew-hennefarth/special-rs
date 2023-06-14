@@ -56,8 +56,8 @@ float_const_impl! {
     SQRT_TAU,
     #[doc = "Returns $\\sqrt{\\pi}$"]
     SQRT_PI,
-    #[doc = "Returns $\\ln{\\pi}$"]
-    LOG_PI,
     #[doc= "Returns $\\ln\\sqrt{2\\pi}$"]
     LOG_SQRT_2_PI,
+    #[doc= "Returns $\\gamma$"]
+    GAMMA,
 }

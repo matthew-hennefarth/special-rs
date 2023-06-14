@@ -21,6 +21,15 @@ use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn, r_poch, r_rgamma};
 use num_complex::ComplexFloat;
 
 /// Implementation of the Gamma and related functions for both real and complex-valued inputs.
+///
+/// For most implementations, a few properties are exploited to simplify the approximations. Firstly, the reflection property is used to always translate the value to the positive real axis.
+/// $$
+/// \Gamma(-z)\Gamma(z) = -\frac{\pi}{z\sin(\pi z)}
+/// $$
+/// Additionally, the recursive nature of the Gamma function is often used to move the value into some desired region to then approximate.
+/// $$
+/// \Gamma(z+1) = z\Gamma(z)
+/// $$
 pub trait Gamma: ComplexFloat {
     /// The Gamma function is defined as
     /// $$
@@ -40,21 +49,16 @@ pub trait Gamma: ComplexFloat {
     /// assert!(gamma(0.0_f64).is_nan()); // Gamma(0) is undefined
     /// assert!((gamma(4.5_f64) - 11.6317283).abs() <  1e-5);
     /// ```
-    /// ## Notes
-    /// The implementation uses a few different methods. Firstly, for real-valued arguments ($z=x$) and $|x| > 33$, then we utilize the Stirling series which is given by
+    /// ## Notes on Real-Valued Implementation
+    /// The implementation is loosely based on the [cephes implementation]. For large $x>33$, we utilize the Stirling series approximations which is given by
     /// $$
     /// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^x \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \frac{139}{51840 x^3} - \frac{571}{2488320 x^4} + \ldots \right)
     /// $$
-    /// We additionally utilize the Euler's reflection formula for the Gamma function to relate negative values to positive values.
+    /// For $x < 1.0\times 10^{-7}$, we utilize the Laurant series around $x=0$ as
     /// $$
-    /// \Gamma(-x)\Gamma(x) = -\frac{\pi}{x\sin\pi x}
+    /// \Gamma(x) \approx \frac{1}{x} - \gamma + \left(\frac{\pi^2}{6} + \gamma^2\right)\frac{x}{2}
     /// $$
-    /// Otherwise we recursively put the value into the range of $(2,3)$ using
-    /// $$
-    /// \Gamma(x+1) =x\Gamma(x)
-    /// $$
-    /// Then we use 2 rational functions of degree 6 and 7 to approximate the Gamma function in this interval. This implementation is based off of the implementation of Scipy which comes from the
-    /// [cephes implementation].
+    /// where $\gamma$ is the [Euler-Mascheroni constant]. Otherwise, we move the value into the interval $(2,3)$ and use 2 rational functions of degree $6$ and $7$ to approximate the Gamma function in this interval.
     ///
     /// # References
     /// - [DLMF]
@@ -66,6 +70,7 @@ pub trait Gamma: ComplexFloat {
     /// [wiki]: https://en.wikipedia.org/wiki/Gamma_function
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/gamma.c
     /// [factorial]: crate::special::Factorial::factorial
+    /// [Euler-Mascheroni constant]: crate::constants::f64::GAMMA
     fn gamma(self) -> Self;
 
     /// Natural logarithm of the absolute vale of the [gamma] function.
@@ -139,11 +144,11 @@ pub trait Gamma: ComplexFloat {
     /// Since the [gamma] function is never zero, this is a well-defined function. Where $\Gamma(z)$ is undefined (negative integers and $0$), we return `0.0`. The implementation here is based off of the [cephes implementation] in the Scipy package.
     ///
     /// ## Implementation Details for Real-Valued Arguments
-    /// Like the [cephes implementation], we use a Chebyshev series to order 16 to approximate values between $(0,1)$. For values outside this region, but $|x| < 34$, we use recursion to move the value into this interval. For $|x| > 34$, we use
+    /// Like the [cephes implementation], we use a Chebyshev series to order 16 to approximate values between $(0,1)$. For values outside this region, but $|x| < 34$, we use recursion to move the value into this interval. For $x > 34$, we use
     /// $$
     /// \frac{1}{\Gamma(x)} = e^{-\ln\Gamma(x)}
     /// $$
-    /// and the appropriate reflection for negative values. Of course, overflow and underflows may occur for large enough values despite the function not having any singularities.
+    /// Of course, overflow and underflows may occur for large enough values despite the function not having any singularities.
     ///
     /// [gamma]: crate::special::Gamma::gamma()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/rgamma.c
