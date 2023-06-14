@@ -17,13 +17,14 @@
 //**********************************************************************
 
 use crate::special::gamma::{
-    c_gamma, c_lngamma, c_rgamma, r_gamma, r_gammasgn, r_lgamma, r_poch, r_rgamma,
+    c_gamma, c_lgamma, c_lngamma, c_rgamma, r_gamma, r_gammasgn, r_lgamma, r_poch, r_rgamma,
 };
 
-use num_complex::{Complex, ComplexFloat};
+use num_complex::Complex;
 
-/// Implementation of the Gamma and related functions for both real and complex-valued inputs.
+/// Gamma and related functions for both real and complex-valued valued arguments.
 ///
+/// # Implementation Notes
 /// For most implementations, a few properties are exploited to simplify the approximations. Firstly, the reflection property is used to always translate the value to the positive real axis.
 /// $$
 /// \Gamma(-z)\Gamma(z) = -\frac{\pi}{z\sin(\pi z)}
@@ -32,8 +33,8 @@ use num_complex::{Complex, ComplexFloat};
 /// $$
 /// \Gamma(z+1) = z\Gamma(z)
 /// $$
-pub trait Gamma: ComplexFloat {
-    /// The Gamma function is defined as
+pub trait Gamma {
+    /// The Gamma function.
     /// $$
     /// \Gamma(z) = \int^{\infty}_0 t^{z-1}e^{-t}dt
     /// $$
@@ -108,7 +109,10 @@ pub trait Gamma: ComplexFloat {
     /// ```
     ///
     /// # Notes
-    /// Implementation is based on the [cephes implementation] in the Scipy package.
+    /// Implementation is based on the [cephes implementation] in the Scipy package. Note however though that the SciPy package does not implement this function for complex-valued arguments. Here we have implemented it simply as
+    /// $$
+    /// \ln\left|\Gamma(z)\right| = \Re \left(\ln\Gamma(z)\right)8
+    /// $$
     ///
     /// # References
     /// - [cephes implementation]
@@ -145,7 +149,7 @@ pub trait Gamma: ComplexFloat {
     /// Implementation is based on that from the SciPy (v1.10.1) package. For real-valued arguments, returns `NaN` when $x \leq 0.0$ since the log of a negative number is complex-valued.
     fn lngamma(self) -> Self;
 
-    /// Reciprocal of the [gamma] function
+    /// Reciprocal of the [Gamma] function.
     /// $$
     /// \frac{1}{\Gamma(z)}
     /// $$
@@ -167,7 +171,7 @@ pub trait Gamma: ComplexFloat {
     /// ```
     ///
     /// # Notes
-    /// Since the [gamma] function is never zero, this is a well-defined function. Where $\Gamma(z)$ is undefined (negative integers and $0$), we return `0.0`. The implementation here is based off of the [cephes implementation] in the Scipy package.
+    /// Since the [Gamma] function is never zero, this is a well-defined function. Where $\Gamma(z)$ is undefined (negative integers and $0$), we return `0.0`. The implementation here is based off of the [cephes implementation] in the Scipy package.
     ///
     /// ## Implementation Details for Real-Valued Arguments
     /// Like the [cephes implementation], we use a Chebyshev series to order 16 to approximate values between $(0,1)$. For values outside this region, but $|x| < 34$, we use recursion to move the value into this interval. For $x > 34$, we use
@@ -176,36 +180,9 @@ pub trait Gamma: ComplexFloat {
     /// $$
     /// Of course, overflow and underflows may occur for large enough values despite the function not having any singularities.
     ///
-    /// [gamma]: crate::special::Gamma::gamma()
+    /// [Gamma]: crate::special::Gamma::gamma()
     /// [cephes implementation]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/rgamma.c
     fn rgamma(self) -> Self;
-
-    /// Pochhammer symbol
-    ///
-    /// The Pochhammer symbol is defined as
-    /// $$
-    /// z^{(m)} = \frac{\Gamma(z + m)}{\Gamma(z)}
-    /// $$
-    /// This is a generalization of the rising factorial which, for non-negative integers $n$ and $m$ is
-    /// $$
-    /// n^{(m)} = n(n+1)(n+2)\ldots(n+m-1) = \prod_{k = 1}^{m} (n+k-1)
-    /// $$
-    /// See the [dlmf] or [wiki] page for more details.
-    ///
-    /// # Examples
-    /// ```
-    /// use sci_rs::special::Gamma;
-    /// assert_eq!(2.0.poch(2.0), 4.0.gamma()/2.0.gamma());
-    /// assert!(((-1.5_f32).poch(0.25) - (-1.25).gamma()/(-1.5).gamma()).abs() < 1e-6);
-    /// ```
-    ///
-    /// # Notes
-    /// The real-value implementation here is based on that from the [cephes] library.
-    ///
-    /// [dlmf]: https://dlmf.nist.gov/5.2#iii
-    /// [wiki]: https://en.wikipedia.org/wiki/Falling_and_rising_factorials
-    /// [cephes]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/poch.c
-    fn poch(self, m: Self) -> Self;
 }
 
 /// Gamma related functions which only make sense, or are only currently supported for real-valued arguments
@@ -218,7 +195,7 @@ pub trait RealGamma: Gamma {
     /// -1.0 & \Gamma(x) < 0
     /// \end{cases}
     /// $$
-    /// The [gamma] function, for real-valued arguments $x$, is never zero and so this is a well-defined function. This is not well defined for complex-values arguments though.
+    /// The [gamma] function, for real-valued arguments $x$, is never zero and so this is a well-defined function.
     ///
     /// # Examples
     /// ```
@@ -232,6 +209,31 @@ pub trait RealGamma: Gamma {
     ///
     /// [gamma]: crate::special::Gamma::gamma()
     fn gammasgn(self) -> Self;
+
+    /// Pochhammer symbol.
+    /// $$
+    /// z^{(m)} = \frac{\Gamma(z + m)}{\Gamma(z)}
+    /// $$
+    /// This is a generalization of the rising factorial which, for non-negative integers $n$ and $m$ is
+    /// $$
+    /// n^{(m)} = n(n+1)(n+2)\ldots(n+m-1) = \prod_{k = 1}^{m} (n+k-1)
+    /// $$
+    /// See the [dlmf] or [wiki] page for more details.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::{RealGamma, Gamma};
+    /// assert_eq!(2.0.poch(2.0), 4.0.gamma()/2.0.gamma());
+    /// assert!(((-1.5_f32).poch(0.25) - (-1.25).gamma()/(-1.5).gamma()).abs() < 1e-6);
+    /// ```
+    ///
+    /// # Notes
+    /// The real-value implementation here is based on that from the [cephes] library.
+    ///
+    /// [dlmf]: https://dlmf.nist.gov/5.2#iii
+    /// [wiki]: https://en.wikipedia.org/wiki/Falling_and_rising_factorials
+    /// [cephes]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/poch.c
+    fn poch(self, m: Self) -> Self;
 }
 
 macro_rules! float_gamma_impl {
@@ -259,17 +261,17 @@ macro_rules! float_gamma_impl {
             fn rgamma(self) -> Self {
                 r_rgamma(self)
             }
-
-            #[inline(always)]
-            fn poch(self, m: Self) -> Self {
-                r_poch(self, m)
-            }
         }
 
         impl RealGamma for $T {
             #[inline(always)]
             fn gammasgn(self) -> Self {
                 r_gammasgn(self)
+            }
+
+            #[inline(always)]
+            fn poch(self, m: Self) -> Self {
+                r_poch(self, m)
             }
         }
     )*)
@@ -287,7 +289,7 @@ macro_rules! float_complexgamma_impl {
 
             #[inline(always)]
             fn lgamma(self) -> Self {
-                todo!();
+                c_lgamma(self).into()
             }
 
             #[inline(always)]
@@ -298,11 +300,6 @@ macro_rules! float_complexgamma_impl {
             #[inline(always)]
             fn rgamma(self) -> Self {
                 c_rgamma(self)
-            }
-
-            #[inline(always)]
-            fn poch(self, _m: Self) -> Self {
-                todo!();
             }
         }
     )*)

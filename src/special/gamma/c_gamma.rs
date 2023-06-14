@@ -183,6 +183,10 @@ where
     c_lngamma_recurrence(z.conj()).conj()
 }
 
+/// Gamma function evaluated from `lngamma`.
+/// $$
+/// \Gamma(z) = e^{\ln\Gamma(z)}
+/// $$
 pub(crate) fn c_gamma<T>(z: T) -> Complex<<T as ComplexFloat>::Real>
 where
     T: ComplexFloat
@@ -201,6 +205,10 @@ where
     c_lngamma(z).exp()
 }
 
+/// Reciprocal of the Gamma function evaluated from `lngamma`.
+/// $$
+/// \frac{1}{\Gamma(z)} = e^{-\ln\Gamma(z)}
+/// $$
 pub(crate) fn c_rgamma<T>(z: T) -> Complex<<T as ComplexFloat>::Real>
 where
     T: ComplexFloat
@@ -217,6 +225,24 @@ where
     Complex<<T as ComplexFloat>::Real>: Sub<T>,
 {
     (-c_lngamma(z)).exp()
+}
+
+pub(crate) fn c_lgamma<T>(z: T) -> <T as ComplexFloat>::Real
+where
+    T: ComplexFloat
+        + AddAssign
+        + MulAssign
+        + Add<<T as ComplexFloat>::Real, Output = T>
+        + Mul<<T as ComplexFloat>::Real, Output = T>,
+    <T as ComplexFloat>::Real: LogGammaConsts
+        + FloatSciConst
+        + LnGammaStirlingConsts
+        + LogGammaTaylorCoeffs
+        + Add<Output = <T as ComplexFloat>::Real>
+        + AddAssign,
+    Complex<<T as ComplexFloat>::Real>: Sub<T>,
+{
+    c_lngamma(z).re()
 }
 
 #[cfg(test)]
@@ -344,6 +370,72 @@ mod tests {
                 re: r_lgamma(1.5),
                 im: 0.0
             },
+            PRECISION
+        );
+    }
+
+    #[test]
+    fn test_c_lgamma() {
+        for i in 1..5 {
+            assert_eq!(
+                c_lgamma(Complex {
+                    re: 0.0,
+                    im: i as f32
+                }),
+                c_lgamma(Complex {
+                    re: 0.0,
+                    im: -i as f32
+                })
+            );
+        }
+        // From Wolframalpha
+        assert_almost_eq!(
+            c_lgamma(Complex { re: 0.0, im: 1.0 }),
+            -0.6509231993018563388852168315,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex { re: 0.0, im: 2.0 }),
+            -2.56922596699087465064722769985,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex { re: 0.0, im: 3.0 }),
+            -4.342756588257865882968429589295,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex { re: 0.0, im: 4.0 }),
+            -6.057393954528778266207447521547,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex { re: 0.0, im: 5.0 }),
+            -7.739762056986849186171316767808,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex {
+                re: 0.001,
+                im: 0.001
+            }),
+            6.56060447383755263956515723187072,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex {
+                re: 1.0e-9,
+                im: 1.0e-9
+            }),
+            20.3766922460892228365517741716250487,
+            PRECISION
+        );
+        assert_almost_eq!(
+            c_lgamma(Complex {
+                re: 150.01,
+                im: 1.0e-20
+            }),
+            600.059543872337641753611684656568302,
             PRECISION
         );
     }
