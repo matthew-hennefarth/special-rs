@@ -19,7 +19,7 @@
 use crate::traits::FloatSciConst;
 
 use num_complex::ComplexFloat;
-use num_traits::{Float, One, Zero};
+use num_traits::{FloatConst, One, Zero};
 use std::ops::{Add, Div, Mul, Sub};
 
 /// Evaluate an $n$-degree polynomial at a specific value $x$.
@@ -96,12 +96,17 @@ where
     }
 }
 
+/// Computes the pre-factor need to flip the sign of the arg in the Gamma function.
+/// $$
+/// \Gamma(z)\Gamma(-z) = - \frac{\pi}{z\sin(\pi z)}
+/// $$
 #[inline]
 pub(crate) fn euler_reflection_prefactor<T>(z: T) -> T
 where
-    T: Float + FloatSciConst,
+    T: ComplexFloat + Mul<<T as ComplexFloat>::Real, Output = T>,
+    <T as ComplexFloat>::Real: FloatSciConst,
 {
-    z * (T::PI() * z).sin()
+    -(z * (z * T::Real::PI()).sin()).recip() * T::Real::PI()
 }
 
 /// Trait to tag types which have stirling coefficients expansions

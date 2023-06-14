@@ -87,9 +87,7 @@ where
     }
 
     if x < -T::MIN_VALUE_FOR_EXP {
-        // Use the reflection
-        let z = euler_reflection_prefactor(x);
-        let y = z.abs().ln() - T::LOG_PI() + r_gammaln(-x);
+        let y = r_gammaln(-x) - euler_reflection_prefactor(x).abs().ln();
         return r_gammasgn(x) * y.exp();
     }
 

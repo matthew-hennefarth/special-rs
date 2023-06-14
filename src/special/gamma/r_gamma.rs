@@ -108,8 +108,7 @@ where
     }
 
     if x.is_sign_negative() {
-        let z = euler_reflection_prefactor(x);
-        return -T::PI() / (z * r_gamma(-x));
+        return euler_reflection_prefactor(x) / r_gamma(-x);
     }
 
     if x > T::MIN_TO_USE_STIRLING {

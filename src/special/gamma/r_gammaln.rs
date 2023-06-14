@@ -82,8 +82,7 @@ where
 
     if x.is_sign_negative() {
         // Utilize Euler reflection and compute gammaln at positive value.
-        let z = euler_reflection_prefactor(x);
-        return T::LOG_PI() - z.abs().ln() - r_gammaln(-x);
+        return euler_reflection_prefactor(x).abs().ln() - r_gammaln(-x);
     }
 
     if x >= T::MAX_TO_RECURSE {
