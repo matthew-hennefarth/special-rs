@@ -106,6 +106,30 @@ where
     x_abs * (T::PI() * z).sin()
 }
 
+/// Coefficients are
+/// $$
+/// \frac{B_{2n}}{2n(2n-1)}
+/// $$
+/// where $B_{2n}$ is the $2n$th Bernoulli number.
+pub(crate) trait LnGammaStirlingConsts: Sized {
+    const LNGAMMA_STIRLING_COEFFS: [Self; 8];
+}
+
+macro_rules! impl_lngammastirlingconsts {
+    ($($T: ty)*) => ($(
+        impl LnGammaStirlingConsts for $T {
+            const LNGAMMA_STIRLING_COEFFS: [Self; 8] = [
+                -2.955065359477124183e-2, 6.4102564102564102564e-3,
+                -1.9175269175269175269e-3, 8.4175084175084175084e-4,
+                -5.952380952380952381e-4, 7.9365079365079365079e-4,
+                -2.7777777777777777778e-3, 8.3333333333333333333e-2
+            ];
+        }
+)*)
+}
+
+impl_lngammastirlingconsts! {f32 f64}
+
 #[cfg(test)]
 mod tests {
     use super::*;

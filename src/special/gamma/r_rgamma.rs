@@ -119,8 +119,7 @@ where
     if w == T::one() {
         return z.recip();
     }
-    let y = w * (T::one() + eval_cheby((T::one() + T::one()) * w - T::one(), &T::R)) / z;
-    y
+    w * (T::one() + eval_cheby((T::one() + T::one()) * w - T::one(), &T::R)) / z
 }
 
 #[cfg(test)]

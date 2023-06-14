@@ -16,11 +16,25 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::gamma_util::{euler_reflection_prefactor, eval_poly};
+use crate::special::gamma::gamma_util::{
+    euler_reflection_prefactor, eval_poly, LnGammaStirlingConsts,
+};
 use crate::special::gamma::r_gamma::RealGammaConsts;
 use crate::traits::FloatSciConst;
 use num_traits::Float;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
+
+#[inline]
+pub(crate) fn lngamma_stirling<T>(z: T) -> T
+where
+    T: Float + LnGammaStirlingConsts + FloatSciConst,
+{
+    let rz = z.recip();
+    let rzz = rz / z;
+
+    let q = (z - (T::one() + T::one()).recip()) * z.ln() - z + T::LOG_SQRT_2_PI();
+    q + eval_poly(rzz, &T::LNGAMMA_STIRLING_COEFFS) * rz
+}
 
 #[inline(always)]
 fn gammaln_singularity<T>() -> T
@@ -30,12 +44,11 @@ where
     T::infinity()
 }
 
-pub(crate) trait RealGammaLnConsts: Sized + RealGammaConsts + Float {
-    const A: [Self; 5];
+pub(crate) trait RealGammaLnConsts:
+    Sized + RealGammaConsts + Float + LnGammaStirlingConsts
+{
     const B: [Self; 6];
     const C: [Self; 7];
-    const USE_STIRLING_APPROX: Self;
-    const ONE_THOUSAND: Self;
     const MAX_TO_RECURSE: Self;
     const MIN_TO_REFLECT: Self;
 }
@@ -43,12 +56,6 @@ pub(crate) trait RealGammaLnConsts: Sized + RealGammaConsts + Float {
 macro_rules! impl_realgammalnconsts_coefficients {
     ($($T: ty)*) => ($(
         impl RealGammaLnConsts for $T {
-            const A: [Self; 5] = [8.11614167470508450300E-4,
-                -5.95061904284301438324E-4,
-                7.93650340457716943945E-4,
-                -2.77777777730099687205E-3,
-                8.33333333333331927722E-2,
-            ];
             const B: [Self; 6] = [
                 -1.37825152569120859100E3,
                 -3.88016315134637840924E4,
@@ -66,8 +73,6 @@ macro_rules! impl_realgammalnconsts_coefficients {
                 -2.53252307177582951285E6,
                 -2.01889141433532773231E6,
             ];
-            const USE_STIRLING_APPROX: Self = 1.0e8;
-            const ONE_THOUSAND: Self = 1.0e3;
             const MAX_TO_RECURSE: Self = 13.0;
             const MIN_TO_REFLECT: Self = -34.0;
         }
@@ -85,13 +90,18 @@ pub(crate) fn r_gammaln<T>(x: T) -> T
 where
     T: Float + FloatSciConst + SubAssign + MulAssign + DivAssign + AddAssign + RealGammaLnConsts,
 {
+    if x <= T::zero() && x == x.floor() {
+        return gammaln_singularity();
+    }
+
+    if x >= T::MAX_TO_RECURSE {
+        return lngamma_stirling(x);
+    }
+
     if x < T::MIN_TO_REFLECT {
         // Utilize Euler reflection and compute gammaln at positive value.
         let x_positive = -x;
         let p = x_positive.floor();
-        if p == x_positive {
-            return gammaln_singularity();
-        }
 
         let z = euler_reflection_prefactor(x_positive, p);
         if z.is_zero() {
@@ -100,47 +110,30 @@ where
         return T::LOG_PI() - z.ln() - r_gammaln(x_positive);
     }
 
-    if x < T::MAX_TO_RECURSE {
-        let mut z = T::one();
-        let mut x = x;
+    // Get into the range of (2, 3]
+    let mut z = T::one();
+    let mut x = x;
 
-        // Get into the range of (2, 3]
-        while x >= T::THREE {
-            x -= T::one();
-            z *= x;
-        }
-
-        while x < T::TWO {
-            if x.is_zero() {
-                return gammaln_singularity();
-            }
-            z /= x;
-            x += T::one();
-        }
-        z = z.abs();
-
-        // Gamma(2) = 1! = 1
-        if x == T::TWO {
-            return z.ln();
-        }
-
-        x -= T::TWO;
-
-        let p = x * eval_poly(x, &T::B) / eval_poly(x, &T::C);
-        return z.ln() + p;
+    while x >= T::THREE {
+        x -= T::one();
+        z *= x;
     }
 
-    let q = (x - T::TWO.recip()) * x.ln() - x + T::LOG_SQRT_2_PI();
-    if x > T::USE_STIRLING_APPROX {
-        return q;
+    while x < T::TWO {
+        z /= x;
+        x += T::one();
     }
-    let p = (x * x).recip();
+    z = z.abs();
 
-    if x >= T::ONE_THOUSAND {
-        q + eval_poly(p, &T::A[2..]) / x
-    } else {
-        q + eval_poly(p, &T::A) / x
+    // Gamma(2) = 1! = 1
+    if x == T::TWO {
+        return z.ln();
     }
+
+    x -= T::TWO;
+
+    let p = x * eval_poly(x, &T::B) / eval_poly(x, &T::C);
+    return z.ln() + p;
 }
 
 #[cfg(test)]

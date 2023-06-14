@@ -82,8 +82,6 @@ where
         }
     }
 
-    // `m` is now not too big or `r` has over/underflown
-
     if m.is_zero() {
         return r;
     }
