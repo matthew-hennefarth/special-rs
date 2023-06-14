@@ -97,16 +97,11 @@ where
 }
 
 #[inline]
-pub(crate) fn euler_reflection_prefactor<T>(x_abs: T, x_floor: T) -> T
+pub(crate) fn euler_reflection_prefactor<T>(z: T) -> T
 where
     T: Float + FloatSciConst,
 {
-    let z = if (x_abs - x_floor) > (T::one() + T::one()).recip() {
-        (x_floor + T::one()) - x_abs
-    } else {
-        x_abs - x_floor
-    };
-    x_abs * (T::PI() * z).sin()
+    z * (T::PI() * z).sin()
 }
 
 /// Coefficients are
@@ -134,6 +129,10 @@ macro_rules! impl_lngammastirlingconsts {
 impl_lngammastirlingconsts! {f32 f64}
 
 /// Stirling approximation for lngamma(z)
+/// $$
+/// \ln \Gamma(z) \approx \ln \left(\sqrt{2\pi} z^{z-0.5}e^{-z}\right) + \sum^{\infty}\_{n=1} \frac{B_{2n}}{2n(2n-1)z^{2n-1}}
+/// $$
+/// where the $B_{2n}$ are Bernoulli numbers
 #[inline]
 pub(crate) fn lngamma_stirling<T>(z: T) -> T
 where

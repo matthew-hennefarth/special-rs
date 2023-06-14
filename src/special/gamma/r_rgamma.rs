@@ -19,8 +19,8 @@
 use crate::special::gamma::r_gammaln;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
-use crate::special::gamma::gamma_util::eval_cheby;
-use crate::special::gamma::r_gammaln::RealGammaLnConsts;
+use crate::special::gamma::gamma_util::{euler_reflection_prefactor, eval_cheby};
+use crate::special::gamma::{r_gammasgn, RealGammaLnConsts};
 use crate::traits::FloatSciConst;
 use num_traits::Float;
 
@@ -78,28 +78,19 @@ where
         + AddAssign
         + RealGammaLnConsts,
 {
+    if x <= T::zero() && x == x.floor() {
+        return T::zero();
+    }
+
     if x > T::MIN_VALUE_FOR_EXP {
         return (-r_gammaln(x)).exp();
     }
 
     if x < -T::MIN_VALUE_FOR_EXP {
         // Use the reflection
-        let w = x.abs();
-        let mut z = (T::PI() * w).sin();
-        if z.is_zero() {
-            return T::zero();
-        }
-        let sign = if z.is_sign_negative() {
-            T::one()
-        } else {
-            -T::one()
-        };
-        z = z.abs();
-        let y = (w * z).ln() - T::LOG_PI() + r_gammaln(w);
-
-        // Check if y is outside of MAXLOG = 8.8029691931113054295988E1       log(2**127)
-
-        return sign * y.exp();
+        let z = euler_reflection_prefactor(x);
+        let y = z.abs().ln() - T::LOG_PI() + r_gammaln(-x);
+        return r_gammasgn(x) * y.exp();
     }
 
     let mut z = T::one();
@@ -112,9 +103,6 @@ where
     while w < T::zero() {
         z /= w;
         w += T::one();
-    }
-    if w.is_zero() {
-        return T::zero();
     }
     if w == T::one() {
         return z.recip();

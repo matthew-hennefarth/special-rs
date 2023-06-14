@@ -38,7 +38,6 @@ pub(crate) trait RealGammaLnConsts:
     const B: [Self; 6];
     const C: [Self; 7];
     const MAX_TO_RECURSE: Self;
-    const MIN_TO_REFLECT: Self;
 }
 
 macro_rules! impl_realgammalnconsts_coefficients {
@@ -62,7 +61,6 @@ macro_rules! impl_realgammalnconsts_coefficients {
                 -2.01889141433532773231E6,
             ];
             const MAX_TO_RECURSE: Self = 13.0;
-            const MIN_TO_REFLECT: Self = -34.0;
         }
 )*)
 }
@@ -82,20 +80,14 @@ where
         return gammaln_singularity();
     }
 
-    if x >= T::MAX_TO_RECURSE {
-        return lngamma_stirling(x);
+    if x.is_sign_negative() {
+        // Utilize Euler reflection and compute gammaln at positive value.
+        let z = euler_reflection_prefactor(x);
+        return T::LOG_PI() - z.abs().ln() - r_gammaln(-x);
     }
 
-    if x < T::MIN_TO_REFLECT {
-        // Utilize Euler reflection and compute gammaln at positive value.
-        let x_positive = -x;
-        let p = x_positive.floor();
-
-        let z = euler_reflection_prefactor(x_positive, p);
-        if z.is_zero() {
-            return gammaln_singularity();
-        }
-        return T::LOG_PI() - z.ln() - r_gammaln(x_positive);
+    if x >= T::MAX_TO_RECURSE {
+        return lngamma_stirling(x);
     }
 
     // Get into the range of (2, 3]
@@ -111,7 +103,6 @@ where
         z /= x;
         x += T::one();
     }
-    z = z.abs();
 
     // Gamma(2) = 1! = 1
     if x == T::TWO {
@@ -119,9 +110,7 @@ where
     }
 
     x -= T::TWO;
-
-    let p = x * eval_poly(x, &T::B) / eval_poly(x, &T::C);
-    return z.ln() + p;
+    z.ln() + x * eval_poly(x, &T::B) / eval_poly(x, &T::C)
 }
 
 #[cfg(test)]
@@ -198,5 +187,7 @@ mod tests {
         assert_almost_eq!(r_gammaln(14.5), 23.8627658416890849, PRECISION); // Taken from Wolframalpha
         assert_almost_eq!(r_gammaln(150.0 + 1.0e-12), 600.0094705553324354, PRECISION);
         // Taken from Wolframalpha
+
+        assert_almost_eq!(r_gammaln(-1.72), 0.95458292505988099545337076566, PRECISION);
     }
 }

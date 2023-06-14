@@ -121,15 +121,11 @@ where
 
 /// Value of the Gamma function when |x| < `RealGammaConsts::MIN_TO_USE_SMALL`
 #[inline(always)]
-fn r_gamma_small<T>(x: T, z: T) -> T
+fn r_gamma_small<T>(x: T) -> T
 where
     T: Float,
 {
-    if x.is_zero() {
-        return gamma_singularity();
-    } else {
-        z / (x + cast::<f32, T>(0.5772156649015329).unwrap() * x * x)
-    }
+    (x + cast::<f32, T>(0.5772156649015329).unwrap() * x * x).recip()
 }
 
 /// Implementation of the `gamma()` for real-valued inputs.
@@ -149,39 +145,25 @@ where
         + DivAssign
         + AddAssign,
 {
-    if x.is_zero() {
+    // Gamma function has poles at the negative integers
+    if x <= T::zero() && x == x.floor() {
         return gamma_singularity();
     }
     if !x.is_finite() {
         return x;
     }
 
-    let x_abs = x.abs();
-    if x_abs > T::MIN_TO_USE_STIRLING {
-        if x.is_sign_positive() {
-            return stirling_series(x);
-        }
+    if x.is_sign_negative() {
+        let z = euler_reflection_prefactor(x);
+        return -T::PI() / (z * r_gamma(-x));
+    }
 
-        let x_abs_floor = x_abs.floor();
-        // Gamma function has poles at the negative integers
-        if x_abs_floor == x_abs {
-            return gamma_singularity();
-        }
+    if x > T::MIN_TO_USE_STIRLING {
+        return stirling_series(x);
+    }
 
-        let is_positive_sign = cast::<T, usize>(x_abs_floor).unwrap() % 2_usize == 1;
-
-        // Utilize the Euler's reflection formula for the gamma function
-        // Gamma(-z)Gamma(z) = -\frac{\pi}{z\sin\pi z}
-        let z = euler_reflection_prefactor(x_abs, x_abs_floor);
-        if z.is_zero() {
-            return gamma_singularity();
-        }
-        return T::PI() / (z.abs() * stirling_series(x_abs))
-            * if is_positive_sign {
-                T::one()
-            } else {
-                -T::one()
-            };
+    if x < T::MIN_USE_SMALL {
+        return r_gamma_small(x);
     }
 
     let mut x = x;
@@ -191,18 +173,7 @@ where
         x -= T::one();
         z *= x;
     }
-
-    while x.is_sign_negative() {
-        if x > -T::MIN_USE_SMALL {
-            return r_gamma_small(x, z);
-        }
-        z /= x;
-        x += T::one();
-    }
     while x < T::TWO {
-        if x < T::MIN_USE_SMALL {
-            return r_gamma_small(x, z);
-        }
         z /= x;
         x += T::one();
     }
