@@ -222,7 +222,7 @@ where
 mod tests {
     use super::*;
 
-    use crate::constants::f64::SQRT_PI;
+    use crate::constants::f64::{PI, SQRT_PI};
     use crate::special::Factorial;
     use num_traits::Float;
 
@@ -293,7 +293,7 @@ mod tests {
         assert_almost_eq!(r_gamma(1.0 / 8.0), 7.5339415987976119047, PRECISION); // OEIS: A203142
 
         // Other Important Values
-        assert_almost_eq!(r_gamma(f64::PI()), 2.2880377953400324179, PRECISION); // OEIS: A269545
+        assert_almost_eq!(r_gamma(PI), 2.2880377953400324179, PRECISION); // OEIS: A269545
 
         assert_almost_eq!(
             r_gamma(1.000001e-35),
@@ -332,7 +332,7 @@ mod tests {
             PRECISION
         );
         assert_almost_eq!(
-            r_gamma(f64::PI() / 2.0),
+            r_gamma(PI / 2.0),
             0.890560890381539328010659635359121005933541962884758999762766,
             PRECISION
         );

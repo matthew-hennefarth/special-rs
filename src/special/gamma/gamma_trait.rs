@@ -18,8 +18,10 @@
 
 use crate::special::gamma::{r_gamma, r_gammaln, r_gammasgn, r_poch, r_rgamma};
 
+use num_complex::ComplexFloat;
+
 /// Implementation of the Gamma and related functions for both real and complex-valued inputs.
-pub trait Gamma {
+pub trait Gamma: ComplexFloat {
     /// The Gamma function is defined as
     /// $$
     /// \Gamma(z) = \int^{\infty}_0 t^{z-1}e^{-t}dt

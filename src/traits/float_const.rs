@@ -16,6 +16,8 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
+use num_traits::FloatConst;
+
 macro_rules! constant {
     ($( $method:ident () -> $ret:expr ; )*)
         => {$(
@@ -34,7 +36,7 @@ macro_rules! float_const_impl {
         /// Different implementation of the [num_traits::FloatConst] trait to include the additional constants in the [sci_rs] library.
         ///
         /// [sci_rs]: crate
-        pub trait FloatSciConst {
+        pub trait FloatSciConst : FloatConst {
             $(#[$doc] fn $constant() -> Self;)+
         }
         float_const_impl! { @float f32, $($constant,)+ }
@@ -58,8 +60,4 @@ float_const_impl! {
     LOG_PI,
     #[doc= "Returns $\\ln\\sqrt{2\\pi}$"]
     LOG_SQRT_2_PI,
-    #[doc= "Returns $\\pi$"]
-    PI,
-    #[doc= "Returns Euler's number $e$"]
-    E,
 }

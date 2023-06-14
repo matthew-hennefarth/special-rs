@@ -17,24 +17,12 @@
 //**********************************************************************
 
 use crate::special::gamma::gamma_util::{
-    euler_reflection_prefactor, eval_poly, LnGammaStirlingConsts,
+    euler_reflection_prefactor, eval_poly, lngamma_stirling, LnGammaStirlingConsts,
 };
 use crate::special::gamma::r_gamma::RealGammaConsts;
 use crate::traits::FloatSciConst;
 use num_traits::Float;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
-
-#[inline]
-pub(crate) fn lngamma_stirling<T>(z: T) -> T
-where
-    T: Float + LnGammaStirlingConsts + FloatSciConst,
-{
-    let rz = z.recip();
-    let rzz = rz / z;
-
-    let q = (z - (T::one() + T::one()).recip()) * z.ln() - z + T::LOG_SQRT_2_PI();
-    q + eval_poly(rzz, &T::LNGAMMA_STIRLING_COEFFS) * rz
-}
 
 #[inline(always)]
 fn gammaln_singularity<T>() -> T
@@ -139,6 +127,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::f64::PI;
     use crate::special::Factorial;
 
     const PRECISION: f64 = 1e-14;
@@ -196,7 +185,7 @@ mod tests {
 
         // Other important
         assert_almost_eq!(
-            r_gammaln(f64::PI().recip()),
+            r_gammaln(PI.recip()),
             1.03364612576558270648553745533,
             PRECISION
         ); // OEIS: A257957

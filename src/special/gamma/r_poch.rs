@@ -112,6 +112,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::f64::PI;
     use crate::special::Factorial;
 
     const PRECISION: f64 = 1e-14;
@@ -145,18 +146,14 @@ mod tests {
         assert_almost_eq!(r_poch(1.5, 1.5), 2.25675833419102511712, PRECISION);
         assert_almost_eq!(r_poch(2.5, 2.5), 18.05406667352819738426, PRECISION);
         assert_almost_eq!(
-            r_poch(150.00001, f64::PI()),
+            r_poch(150.00001, PI),
             7015772.59900571219623088837,
             PRECISION
         );
 
         // Add some larger values to compare to!
         // From Wolframalpha
-        assert_almost_eq!(
-            r_poch(f64::PI() / 2.0, f64::PI()),
-            17.63940522158362397144,
-            PRECISION
-        );
+        assert_almost_eq!(r_poch(PI / 2.0, PI), 17.63940522158362397144, PRECISION);
         assert_almost_eq!(
             r_poch(-34.54, -2.4),
             0.000959271152790991576995792318463,

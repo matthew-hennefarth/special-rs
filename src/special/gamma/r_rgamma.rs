@@ -125,7 +125,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constants::f64::SQRT_PI;
+    use crate::constants::f64::{PI, SQRT_PI};
     use crate::special::Factorial;
 
     const PRECISION: f64 = 1E-14;
@@ -176,11 +176,7 @@ mod tests {
         ); // OEIS: A203142
 
         // Other Important Values
-        assert_almost_eq!(
-            r_rgamma(f64::PI()),
-            2.2880377953400324179.recip(),
-            PRECISION
-        ); // OEIS: A269545
+        assert_almost_eq!(r_rgamma(PI), 2.2880377953400324179.recip(), PRECISION); // OEIS: A269545
 
         assert_almost_eq!(
             r_rgamma(1.000001e-35),
@@ -227,7 +223,7 @@ mod tests {
             PRECISION
         );
         assert_almost_eq!(
-            r_rgamma(f64::PI() / 2.0),
+            r_rgamma(PI / 2.0),
             0.890560890381539328010659635359121005933541962884758999762766.recip(),
             PRECISION
         );

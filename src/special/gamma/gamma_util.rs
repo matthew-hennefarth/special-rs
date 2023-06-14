@@ -17,6 +17,8 @@
 //**********************************************************************
 
 use crate::traits::FloatSciConst;
+
+use num_complex::ComplexFloat;
 use num_traits::{Float, One, Zero};
 use std::ops::{Add, Mul, Sub};
 
@@ -26,17 +28,17 @@ use std::ops::{Add, Mul, Sub};
 /// $$
 /// c_0x^n + c_1x^{n-1} + \ldots + c_n
 /// $$
-pub(crate) fn eval_poly<T>(x: T, coeffs: &[T]) -> T
+pub(crate) fn eval_poly<T, Scalar>(x: T, coeffs: &[Scalar]) -> T
 where
-    T: Copy + Zero + Mul<Output = T>,
-    <T as Mul>::Output: Add<T>,
+    T: Copy + One + Zero + Mul<T> + Mul<Scalar, Output = T> + Add<Scalar, Output = T>,
+    Scalar: Copy,
 {
     match coeffs.len() {
         0 => T::zero(),
-        1 => coeffs[0],
+        1 => T::one() * coeffs[0],
         _ => coeffs[1..]
             .iter()
-            .fold(coeffs[0], |result, &c| (result * x) + c),
+            .fold(T::one() * coeffs[0], |result, &c| (result * x) + c),
     }
 }
 
@@ -66,18 +68,19 @@ where
 /// [Clenshaw algorithm]: https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series
 /// [eval_poly]: crate::special::gamma_util::eval_poly
 /// [cephes library]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/chbevl.c#L63
-pub(crate) fn eval_cheby<T>(x: T, coeffs: &[T]) -> T
+pub(crate) fn eval_cheby<T, Scalars>(x: T, coeffs: &[Scalars]) -> T
 where
-    T: One + Zero + Copy + Sub<Output = T>,
+    T: One + Zero + Copy + Sub<Output = T> + Mul<Scalars, Output = T> + Add<Scalars, Output = T>,
+    Scalars: Copy,
 {
     let two = T::one() + T::one();
     match coeffs.len() {
         0 => T::zero(),
-        1 => coeffs[0],
-        2 => coeffs[1] + coeffs[0] * x,
+        1 => T::one() * coeffs[0],
+        2 => x * coeffs[0] + coeffs[1],
         _ => {
             // This uses the Clenshaw's recurrece formula
-            let mut bk = coeffs[0];
+            let mut bk = T::one() * coeffs[0];
             let mut bk1 = T::zero();
             let mut _bk2 = T::zero(); // Compiler warns about unused, but it is used.
 
@@ -86,9 +89,9 @@ where
             for p in &coeffs[1..last_element] {
                 _bk2 = bk1;
                 bk1 = bk;
-                bk = *p + two * x * bk1 - _bk2;
+                bk = two * x * bk1 - _bk2 + *p;
             }
-            coeffs[last_element] + x * bk - bk1
+            x * bk - bk1 + coeffs[last_element]
         }
     }
 }
@@ -129,6 +132,23 @@ macro_rules! impl_lngammastirlingconsts {
 }
 
 impl_lngammastirlingconsts! {f32 f64}
+
+/// Stirling approximation for lngamma(z)
+#[inline]
+pub(crate) fn lngamma_stirling<T>(z: T) -> T
+where
+    T: ComplexFloat
+        + Add<<T as ComplexFloat>::Real, Output = T>
+        + Mul<<T as ComplexFloat>::Real, Output = T>,
+    <T as ComplexFloat>::Real: FloatSciConst + LnGammaStirlingConsts,
+{
+    let rz: T = z.recip();
+    let rzz: T = rz / z;
+
+    // (z - 0.5)ln(z) - z + ln(sqrt(2pi)) + (1/z)(Stirling)
+    let q = (z - (T::one() + T::one()).recip()) * z.ln() - z + T::Real::LOG_SQRT_2_PI();
+    q + eval_poly(rzz, &T::Real::LNGAMMA_STIRLING_COEFFS) * rz
+}
 
 #[cfg(test)]
 mod tests {
