@@ -46,14 +46,22 @@ pub trait Gamma: ComplexFloat {
     /// For a more thorough explanation of the Gamma function and all of its properties, it is recommended to read through the [DLMF] or [wiki] page.
     ///
     /// # Examples
+    /// For real-valued inputs:
     /// ```
-    /// use sci_rs::special::gamma;
-    /// assert_eq!(gamma(4.0_f32), 6.0); // Gamma(4) = 3!
-    /// assert!(gamma(0.0_f64).is_nan()); // Gamma(0) is undefined
-    /// assert!((gamma(4.5_f64) - 11.6317283).abs() <  1e-5);
+    /// use sci_rs::special::Gamma;
+    /// assert_eq!(4.0_f32.gamma(), 6.0); // Gamma(4) = 3!
+    /// assert!((0.0_f64).gamma().is_nan()); // Gamma(0) is undefined
+    /// assert!(((4.5_f64).gamma() - 11.6317283).abs() <  1e-5);
     /// ```
-    /// ## Notes on Real-Valued Implementation
-    /// The implementation is loosely based on the [cephes implementation]. For large $x>33$, we utilize the Stirling series approximations which is given by
+    /// Also for complex-valued inputs:
+    /// ```
+    /// use sci_rs::special::Gamma;
+    /// use num_complex::Complex32;
+    /// let z = Complex32{re: 1.2, im: -0.4};
+    /// println!("{}", z.gamma()); // 0.828 + 0.0836 j
+    /// ```
+    /// ## Notes
+    /// The real-valued implementation is loosely based on the [cephes implementation]. For large $x>33$, we utilize the Stirling series approximations which is given by
     /// $$
     /// \sqrt{\frac{2\pi}{x}} \left(\frac{x}{e}\right)^x \left(1 + \frac{1}{12 x} + \frac{1}{288 x^2} - \frac{139}{51840 x^3} - \frac{571}{2488320 x^4} + \ldots \right)
     /// $$
@@ -62,6 +70,11 @@ pub trait Gamma: ComplexFloat {
     /// \Gamma(x) \approx \frac{1}{x} - \gamma + \left(\frac{\pi^2}{6} + \gamma^2\right)\frac{x}{2}
     /// $$
     /// where $\gamma$ is the [Euler-Mascheroni constant]. Otherwise, we move the value into the interval $(2,3)$ and use 2 rational functions of degree $6$ and $7$ to approximate the Gamma function in this interval.
+    ///
+    /// For complex inputs, we simply use
+    /// $$
+    /// \Gamma(z) = e^{\ln(\Gamma(z)}
+    /// $$
     ///
     /// # References
     /// - [DLMF]
@@ -150,9 +163,8 @@ pub trait Gamma: ComplexFloat {
     /// assert_eq!((-0.23).gammasgn(), -1.0);
     /// assert_eq!((-1.5).gammasgn(), 1.0);
     /// ```
-    ///
     /// ## Notes
-    /// We return $0.0$ if $\Gamma(x)$  is undefined (where [gamma] returns `NaN` or `Inf`). This is $x=0.0, -1, -2, \ldots$.
+    /// We return $0.0$ if $\Gamma(x)$ is undefined (where [gamma] returns `NaN` or `Inf`). This is $x=0.0, -1, -2, \ldots$.
     ///
     /// [gamma]: crate::special::Gamma::gamma()
     fn gammasgn(self) -> Self;
@@ -163,11 +175,19 @@ pub trait Gamma: ComplexFloat {
     /// $$
     ///
     /// # Examples
+    /// For real-valued arguments:
     /// ```
     /// use sci_rs::special::Gamma;
     /// assert_eq!(1.5.rgamma(), 1.0/(1.5.gamma()));
     /// assert_eq!((-2.0).rgamma(), 0.0);
     /// assert_eq!((4.0).rgamma(), 1.0/(4.0.gamma())); // Should be 1/24
+    /// ```
+    /// For complex-valued arguments:
+    /// ```
+    /// use sci_rs::special::Gamma;
+    /// use num_complex::Complex32;
+    /// let z = Complex32{re: 1.0, im: 1.0};
+    /// assert_eq!(z.rgamma(), 1.0/z.gamma());
     /// ```
     ///
     /// ## Notes
@@ -222,6 +242,13 @@ pub trait Gamma: ComplexFloat {
 /// assert_eq!(gamma(1.0_f32), 1.0_f32.gamma());
 /// assert_eq!(gamma(2.24_f64), 2.24_f64.gamma());
 /// ```
+/// Also for complex-valued inputs:
+/// ```
+/// use sci_rs::special::{Gamma, gamma};
+/// use num_complex::Complex32;
+/// let z = Complex32{re: 1.2, im: -0.4};
+/// println!("{}", gamma(z)); // 0.828 + 0.0836 j
+/// ```
 ///
 /// [Gamma trait]: crate::special::Gamma
 /// [gamma]: crate::special::Gamma::gamma
@@ -244,6 +271,7 @@ where
 /// ```
 /// [lnabsgamma]: crate::special::Gamma::lnabsgamma
 /// [Gamma trait]: crate::special::Gamma
+#[inline(always)]
 pub fn lnabsgamma<T>(z: T) -> T
 where
     T: Gamma,
