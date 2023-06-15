@@ -1,12 +1,27 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
+//                                                                     *
+// See the LICENSE files at the top-level directory of this            *
+// distribution.                                                       *
+//                                                                     *
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or   *
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license      *
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your        *
+// option. This file may not be copied, modified, or distributed       *
+// except according to those terms.                                    *
+//                                                                     *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
 #![warn(missing_docs)]
-//! Sci-rs
+#![doc(test(attr(deny(warnings))))]
+
+//! # sci_rs
 //!
 //! A scientific library written in pure Rust inspired by [SciPy].
+//!
+//! # Features
+//! Working on!
 //!
 //! [SciPy]: https://scipy.org/
 

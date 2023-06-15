@@ -1,8 +1,9 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
+use crate::special::gamma::gamma_util::is_gamma_pole;
 use crate::special::gamma::{
     euler_reflection_prefactor, eval_poly, gamma_stirling_series, StirlingSeriesCoefficients,
 };
@@ -91,14 +92,12 @@ where
         + DivAssign
         + AddAssign,
 {
-    // Gamma function has poles at the negative integers
-    if x <= T::zero() && x == x.floor() {
-        return gamma_singularity();
-    }
     if !x.is_finite() {
         return x;
     }
-
+    if is_gamma_pole(x) {
+        return gamma_singularity();
+    }
     if x.is_sign_negative() {
         return euler_reflection_prefactor(x) / r_gamma(-x);
     }

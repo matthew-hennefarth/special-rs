@@ -1,5 +1,5 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
@@ -8,10 +8,6 @@ use num_traits::{CheckedAdd, CheckedMul};
 use std::cmp::min;
 
 /// Various combinatorics functions for integer-types.
-///
-/// Defined the `choose` and `perm` function for `Self`. Implemented for
-/// primitive integer types.These functions are useful in a variety of mathematical and
-/// statistical settings. Checked versions are also provided to prevent panicking from overflowing during the multiplication.
 pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// The number of combinations of $n$ taken $k$ at a time.
     ///

@@ -1,10 +1,9 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
-use crate::special::gamma::{
-    c_gamma, c_lgamma, c_lngamma, c_rgamma, r_gamma, r_gammasgn, r_lgamma, r_poch, r_rgamma,
-};
+use crate::special::gamma::complex_gamma_impl::*;
+use crate::special::gamma::real_gamma_impl::*;
 
 use num_complex::Complex;
 

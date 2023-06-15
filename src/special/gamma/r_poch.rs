@@ -1,19 +1,13 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::{r_gammasgn, r_lgamma, RealGammaLnConsts};
+use crate::special::gamma::gamma_util::is_gamma_pole;
+use crate::special::gamma::real_gamma_impl::*;
 use crate::traits::FloatSciConst;
 use num_traits::{cast, Float};
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
-
-fn is_nonpositive_int<T>(x: T) -> bool
-where
-    T: Float,
-{
-    x.is_finite() && x <= T::zero() && x == x.ceil()
-}
 
 pub(crate) trait RealPochConsts {
     const MIN_FOR_EXP: Self;
@@ -86,12 +80,12 @@ where
     }
 
     // Check for infinite
-    if is_nonpositive_int(x + m) && !is_nonpositive_int(x) && x + m != m {
+    if is_gamma_pole(x + m) && !is_gamma_pole(x) && x + m != m {
         return T::nan();
     }
 
     // Check for zero
-    if !is_nonpositive_int(x + m) && is_nonpositive_int(x) {
+    if !is_gamma_pole(x + m) && is_gamma_pole(x) {
         return T::zero();
     }
 

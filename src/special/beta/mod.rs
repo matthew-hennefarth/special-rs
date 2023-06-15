@@ -3,11 +3,14 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-//! Various numerical traits which often extends those present in
-//! [num_traits].
+//! Various functions related to the Beta function.
+//!
+mod beta_trait;
 
-mod float_const;
-mod generic_int;
+pub use beta_trait::*;
 
-pub use float_const::*;
-pub(crate) use generic_int::*;
+mod r_beta;
+
+mod real_beta_impl {
+    pub(crate) use super::r_beta::*;
+}

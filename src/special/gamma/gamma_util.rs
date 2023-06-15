@@ -1,12 +1,12 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
 use crate::traits::FloatSciConst;
 
 use num_complex::ComplexFloat;
-use num_traits::{FloatConst, One, Zero};
+use num_traits::{Float, FloatConst, One, Zero};
 use std::ops::{Add, Div, Mul, Sub};
 
 /// Evaluate an $n$-degree polynomial at a specific value $x$.
@@ -81,6 +81,15 @@ where
             x * bk - bk1 + coeffs[last_element]
         }
     }
+}
+
+/// Determines if $z$ is at a pole of the Gamma function (0, -1, -2, etc).
+#[inline]
+pub(crate) fn is_gamma_pole<T>(z: T) -> bool
+where
+    T: ComplexFloat,
+{
+    z.re() <= T::Real::zero() && z.re() == z.re().floor() && z.im().is_zero()
 }
 
 /// Computes the pre-factor need to flip the sign of the arg in the Gamma function.

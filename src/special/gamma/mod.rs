@@ -1,28 +1,30 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-//! Various functions related to the gamma function.
+//! Various functions related to the Gamma function.
 
 mod gamma_trait;
-mod gamma_util;
+pub(crate) mod gamma_util;
 
 pub use gamma_trait::*;
 use gamma_util::*;
 
-// Functions which assume a real-valued input
+mod c_gamma;
 mod r_gamma;
 mod r_gammasgn;
 mod r_lgamma;
 mod r_poch;
 mod r_rgamma;
 
-use r_gamma::*;
-use r_gammasgn::*;
-use r_lgamma::*;
-use r_poch::*;
-use r_rgamma::*;
-
-mod c_gamma;
-use c_gamma::*;
+mod real_gamma_impl {
+    pub(crate) use super::r_gamma::*;
+    pub(crate) use super::r_gammasgn::*;
+    pub(crate) use super::r_lgamma::*;
+    pub(crate) use super::r_poch::*;
+    pub(crate) use super::r_rgamma::*;
+}
+mod complex_gamma_impl {
+    pub(crate) use super::c_gamma::*;
+}

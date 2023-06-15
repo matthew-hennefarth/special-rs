@@ -1,10 +1,10 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
 use crate::special::gamma::gamma_util::{
-    euler_reflection_prefactor, eval_poly, lngamma_stirling, LnGammaStirlingConsts,
+    euler_reflection_prefactor, eval_poly, is_gamma_pole, lngamma_stirling, LnGammaStirlingConsts,
 };
 use crate::special::gamma::r_gamma::RealGammaConsts;
 use crate::traits::FloatSciConst;
@@ -63,7 +63,7 @@ pub(crate) fn r_lgamma<T>(x: T) -> T
 where
     T: Float + FloatSciConst + SubAssign + MulAssign + DivAssign + AddAssign + RealGammaLnConsts,
 {
-    if x <= T::zero() && x == x.floor() {
+    if is_gamma_pole(x) {
         return gammaln_singularity();
     }
 

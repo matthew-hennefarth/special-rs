@@ -1,13 +1,12 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::r_lgamma;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
-use crate::special::gamma::gamma_util::{euler_reflection_prefactor, eval_cheby};
-use crate::special::gamma::{r_gammasgn, RealGammaLnConsts};
+use crate::special::gamma::gamma_util::{euler_reflection_prefactor, eval_cheby, is_gamma_pole};
+use crate::special::gamma::real_gamma_impl::*;
 use crate::traits::FloatSciConst;
 use num_traits::Float;
 
@@ -65,7 +64,7 @@ where
         + AddAssign
         + RealGammaLnConsts,
 {
-    if x <= T::zero() && x == x.floor() {
+    if is_gamma_pole(x) {
         return T::zero();
     }
 

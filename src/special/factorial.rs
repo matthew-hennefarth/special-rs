@@ -1,5 +1,5 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
@@ -11,10 +11,6 @@ use num_traits::{CheckedAdd, CheckedMul, PrimInt};
 const MAX_MULTIPLICATIONS: usize = 16;
 
 /// Factorial functions for integer-types.
-///
-/// Defines the `factorial`, `factorial2`, and `factorialk` functions
-/// for `Self`. Implemented for primitive integer types (usize, isize,
-/// etc).
 pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// The factorial function is defined as the product of all positive integers less than or equal
     /// to $n$.
@@ -84,7 +80,6 @@ pub trait Factorial: Sized + CheckedMul + CheckedAdd {
     /// ```
     /// ## For `isize`
     /// ```
-    /// use std::collections::hash_map::Values;
     /// use sci_rs::special::Factorial;
     ///
     /// assert_eq!(0_isize.factorial2(), 1);
@@ -273,6 +268,7 @@ macro_rules! factorial_primint_impl {
     )*)
 }
 
+// TODO implement so that there is an additional check at the begining to see if the results can even be stored in the type
 factorial_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
 #[cfg(has_i128)]
 factorial_primint_impl! {u128 i128}

@@ -5,8 +5,10 @@ edition = "2021"
 authors = ["Matthew R. Hennefarth"]
 description = "Scientific library written in pure Rust"
 homepage = "https://github.com/matthew-hennefarth/sci-rs"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 readme = "README.md"
+categories = ["algorithms", "science"]
+keywords = ["mathematics", "physics", "science", "numerics"]
 
 [dependencies]
 num-traits = "0.2"

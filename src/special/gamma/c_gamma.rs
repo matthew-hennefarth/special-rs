@@ -1,9 +1,11 @@
 //**********************************************************************
-// This file is part of Sci-rs                                         *
+// This file is part of sci-rs                                         *
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::gamma_util::{eval_poly, lngamma_stirling, LnGammaStirlingConsts};
+use crate::special::gamma::gamma_util::{
+    eval_poly, is_gamma_pole, lngamma_stirling, LnGammaStirlingConsts,
+};
 use crate::traits::FloatSciConst;
 use num_complex::{Complex, ComplexFloat};
 use num_traits::{Float, FloatConst, One, Zero};
@@ -42,6 +44,7 @@ impl_loggamma_taylorconsts! {f32 f64}
 /// \ln\Gamma(z+1) = -\gamma z + \frac{\zeta(2)}{2}z^2 - \frac{\zeta(3)}{3}z^3\ldots
 /// $$
 /// Here $\gamma$ is the Euler-Mascheroni constant.
+#[inline]
 fn loggamma_taylor<T>(z: T) -> T
 where
     T: ComplexFloat
@@ -128,7 +131,7 @@ where
     if !z.is_finite() {
         return Complex::new(z.re(), z.im());
     }
-    if z.re() <= T::Real::zero() && z.re() == z.re().floor() && z.im().is_zero() {
+    if is_gamma_pole(z) {
         return Complex::new(T::Real::nan(), T::Real::nan());
     }
 
@@ -236,7 +239,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::special::gamma::r_lgamma;
+    use crate::special::gamma::real_gamma_impl::r_lgamma;
 
     const PRECISION: f64 = 1.0e-14;
 
