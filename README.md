@@ -10,8 +10,6 @@ It is currently in its infancy. Working on special function implementations. Cur
 
 ## License
 
----
-
 Licensed under either of 
 - [Apache License, Version 2.0]
 - [MIT license]

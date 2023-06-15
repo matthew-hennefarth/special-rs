@@ -4,6 +4,7 @@
 //**********************************************************************
 use num_traits::{PrimInt, Signed};
 
+// TODO: Remove this trait and just use generics..
 /// Allows me to know if a number is negative irregardless of signed or
 /// unsigned
 pub(crate) trait GenericInt: PrimInt {
