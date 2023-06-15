@@ -9,6 +9,7 @@
 //! - Factorial, double factorial, and $k$-factorial
 //! - Combinatorics (choice and permutations)
 //! - Gamma and related functions
+mod bernoulli;
 mod beta;
 mod combinatorics;
 mod factorial;
