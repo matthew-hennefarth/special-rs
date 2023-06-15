@@ -14,6 +14,7 @@ mod combinatorics;
 mod factorial;
 mod gamma;
 
+pub use beta::*;
 pub use combinatorics::*;
 pub use factorial::*;
 pub use gamma::*;

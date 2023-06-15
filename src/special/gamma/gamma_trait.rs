@@ -96,7 +96,7 @@ pub trait Gamma {
     /// # Notes
     /// Implementation is based on the [cephes implementation] in the Scipy package. Note however though that the SciPy package does not implement this function for complex-valued arguments. Here we have implemented it simply as
     /// $$
-    /// \ln\left|\Gamma(z)\right| = \Re \left(\ln\Gamma(z)\right)8
+    /// \ln\left|\Gamma(z)\right| = \Re \left(\ln\Gamma(z)\right)
     /// $$
     ///
     /// # References

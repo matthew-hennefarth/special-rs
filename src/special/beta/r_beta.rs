@@ -27,7 +27,8 @@ macro_rules! float_rbetaconsts_impl {
 float_rbetaconsts_impl! {f32 f64}
 
 /// For large arguments, the log of the function is evaluated using lgam() then exponentiated.
-/// '
+///
+/// Implementation comes from the cephes library in SciPy: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/beta.c#L55
 pub(crate) fn r_beta<T>(mut a: T, mut b: T) -> T
 where
     T: Float + RealBetaConsts + RealGamma + FloatConst + SubAssign + AddAssign,
@@ -44,7 +45,7 @@ where
     }
 
     // a > ASYMP_FACTOR * max(|b|, 1)
-    if a.abs() > T::ASYMP_FACTOR * b.abs() && a > T::ASYMP_FACTOR {
+    if a.abs() > T::ASYMP_FACTOR * b.abs() && a.abs() > T::ASYMP_FACTOR {
         // Avoid loss of precision in lgamma(a+b) - lgamma(a)
         return r_lbeta_asymp(a, b);
     }
@@ -66,6 +67,7 @@ where
     (a / y) * b
 }
 
+/// Swap some things around to see if we can still do the computation.
 fn r_beta_negint<T>(a: T, b: T) -> T
 where
     T: Float + RealBetaConsts + RealGamma + FloatConst + SubAssign + AddAssign,
@@ -86,6 +88,7 @@ where
 }
 
 /// Asymptotic expansion for  ln(|B(a, b)|) for a > ASYMP_FACTOR*max(|b|, 1).
+/// Taken from the Cephes library, and an unknown source.
 fn r_lbeta_asymp<T>(a: T, b: T) -> T
 where
     T: Float + RealGamma + RealGamma + FloatConst + SubAssign + AddAssign,
@@ -123,7 +126,22 @@ mod tests {
                 );
             }
         }
-        //println!("{}", r_beta(2.0, 2.0));
-        //assert!(false);
+
+        // check asymptote (From SciPy v 1.10.1)
+        assert_almost_eq!(r_beta(1.1E6, 0.5), 0.0016899686300445731797, PRECISION);
+        assert_almost_eq!(r_beta(1.1e6, 0.7), 0.0000766158047285244695, PRECISION);
+        assert_almost_eq!(r_beta(122000.64, 1.1), 0.0000024173646023778890, PRECISION);
+
+        // Check Max Gamma?
+        assert_almost_eq!(
+            r_beta(165.4, 7.1),
+            0.0000000000001352937563602587676443787892,
+            PRECISION
+        );
+
+        // Check for negative integers
+        assert_eq!(r_beta(-1.0, 1.0), -1.0);
+        assert_eq!(r_beta(-2.0, 1.0), -0.5);
+        assert_eq!(r_beta(-1.0, 3.0), f64::INFINITY);
     }
 }
