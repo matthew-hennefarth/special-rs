@@ -78,35 +78,65 @@ pub trait Comb {
     fn perm(self, k: Self) -> Self;
 }
 
-impl<T> Comb for T
+macro_rules! comb_primint_impl {
+    ($($T: ty)*) => ($(
+        impl Comb for $T {
+            #[inline(always)]
+            fn choose(self, k: Self) -> Self {
+                primint_choose(self, k)
+            }
+
+            #[inline(always)]
+            fn choose_rep(self, k: Self) -> Self {
+                primint_choose_rep(self, k)
+            }
+
+            #[inline(always)]
+            fn perm(self, k: Self) -> Self {
+                primint_perm(self, k)
+            }
+        }
+    )*)
+}
+
+comb_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
+#[cfg(has_u128)]
+comb_primint_impl! {u128}
+#[cfg(has_i128)]
+comb_primint_impl! {i128}
+
+fn primint_choose<T>(n: T, k: T) -> T
 where
     T: PrimInt + FromPrimitive,
 {
-    fn choose(self, k: Self) -> Self {
-        if k > self || self < Self::zero() || k < Self::zero() {
-            return Self::zero();
-        }
-        let m = self + Self::one();
-        let n_terms = (min(k, self - k) + Self::one()).to_usize().unwrap();
-        (1..n_terms).fold(T::one(), |result, i| {
-            result * (m - T::from_usize(i).unwrap()) / T::from_usize(i).unwrap()
-        })
+    if k > n || n < T::zero() || k < T::zero() {
+        return T::zero();
+    }
+    let m = n + T::one();
+    let n_terms = (min(k, n - k) + T::one()).to_usize().unwrap();
+    (1..n_terms).fold(T::one(), |result, i| {
+        result * (m - T::from_usize(i).unwrap()) / T::from_usize(i).unwrap()
+    })
+}
+
+fn primint_choose_rep<T>(n: T, k: T) -> T
+where
+    T: PrimInt + FromPrimitive,
+{
+    primint_choose(n + k - T::one(), k)
+}
+
+fn primint_perm<T>(n: T, k: T) -> T
+where
+    T: PrimInt + FromPrimitive,
+{
+    if k > n || n < T::zero() || k < T::zero() {
+        return T::zero();
     }
 
-    #[inline(always)]
-    fn choose_rep(self, k: Self) -> Self {
-        (self + k - Self::one()).choose(k)
-    }
-
-    fn perm(self, k: Self) -> Self {
-        if k > self || self < Self::zero() || k < Self::zero() {
-            return Self::zero();
-        }
-
-        let start = (self - k + Self::one()).to_usize().unwrap();
-        let end = (self + Self::one()).to_usize().unwrap();
-        (start..end).fold(T::one(), |result, val| result * T::from_usize(val).unwrap())
-    }
+    let start = (n - k + T::one()).to_usize().unwrap();
+    let end = (n + T::one()).to_usize().unwrap();
+    (start..end).fold(T::one(), |result, val| result * T::from_usize(val).unwrap())
 }
 
 /// Checked combinatorics functions.
@@ -147,44 +177,75 @@ pub trait CheckedComb: Sized {
     fn checked_perm(self, k: Self) -> Option<Self>;
 }
 
-impl<T> CheckedComb for T
+macro_rules! checkedcomb_primint_impl {
+    ($($T: ty)*) => ($(
+        impl CheckedComb for $T {
+            #[inline(always)]
+            fn checked_choose(self, k: Self) -> Option<Self> {
+                primint_checked_choose(self, k)
+            }
+
+            #[inline(always)]
+            fn checked_choose_rep(self, k: Self) -> Option<Self> {
+                primint_checked_choose_rep(self, k)
+            }
+
+            #[inline(always)]
+            fn checked_perm(self, k: Self) -> Option<Self> {
+                primint_checked_perm(self, k)
+            }
+        }
+    )*)
+}
+
+checkedcomb_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
+#[cfg(has_u128)]
+checkedcomb_primint_impl! {u128}
+#[cfg(has_i128)]
+checkedcomb_primint_impl! {i128}
+
+fn primint_checked_choose<T>(n: T, k: T) -> Option<T>
 where
     T: PrimInt + FromPrimitive,
 {
-    fn checked_choose(self, k: Self) -> Option<Self> {
-        if k > self || self < Self::zero() || k < Self::zero() {
-            return Some(Self::zero());
-        }
-
-        let m = self.checked_add(&Self::one())?;
-        let n_terms = (min(k, self - k) + Self::one()).to_usize()?;
-
-        let mut result = Self::one();
-        for i in 1..n_terms {
-            let i = T::from_usize(i)?;
-            result = result.checked_mul(&(m - i))? / i;
-        }
-        Some(result)
+    if k > n || n < T::zero() || k < T::zero() {
+        return Some(T::zero());
     }
-    fn checked_choose_rep(self, k: Self) -> Option<Self> {
-        self.checked_add(&k)?
-            .checked_sub(&Self::one())?
-            .checked_choose(k)
-    }
-    fn checked_perm(self, k: Self) -> Option<Self> {
-        if k > self || self < Self::zero() || k < Self::zero() {
-            return Some(Self::zero());
-        }
 
-        let start = (self - k).checked_add(&Self::one())?.to_usize()?;
-        let end = self.checked_add(&Self::one())?.to_usize()?;
+    let m = n.checked_add(&T::one())?;
+    let n_terms = (min(k, n - k) + T::one()).to_usize()?;
 
-        let mut result = Self::one();
-        for i in start..end {
-            result = result.checked_mul(&T::from_usize(i)?)?;
-        }
-        Some(result)
+    let mut result = T::one();
+    for i in 1..n_terms {
+        let i = T::from_usize(i)?;
+        result = result.checked_mul(&(m - i))? / i;
     }
+    Some(result)
+}
+
+fn primint_checked_choose_rep<T>(n: T, k: T) -> Option<T>
+where
+    T: PrimInt + FromPrimitive,
+{
+    primint_checked_choose(n.checked_add(&k)?.checked_sub(&T::one())?, k)
+}
+
+fn primint_checked_perm<T>(n: T, k: T) -> Option<T>
+where
+    T: PrimInt + FromPrimitive,
+{
+    if k > n || n < T::zero() || k < T::zero() {
+        return Some(T::zero());
+    }
+
+    let start = (n - k).checked_add(&T::one())?.to_usize()?;
+    let end = n.checked_add(&T::one())?.to_usize()?;
+
+    let mut result = T::one();
+    for i in start..end {
+        result = result.checked_mul(&T::from_usize(i)?)?;
+    }
+    Some(result)
 }
 
 #[cfg(test)]
