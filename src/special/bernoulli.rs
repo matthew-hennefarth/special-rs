@@ -3,7 +3,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::Combinatorics;
+use crate::special::Comb;
 use num_traits::{cast, Float, FromPrimitive, PrimInt};
 use std::ops::AddAssign;
 

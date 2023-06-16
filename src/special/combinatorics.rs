@@ -3,12 +3,11 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::traits::GenericInt;
-use num_traits::{CheckedAdd, CheckedMul};
+use num_traits::{FromPrimitive, PrimInt};
 use std::cmp::min;
 
 /// Various combinatorics functions for integer-types.
-pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
+pub trait Comb {
     /// The number of combinations of $n$ taken $k$ at a time.
     ///
     /// This is also known as $n$ choose $k$ and is generally given by
@@ -20,7 +19,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// $$
     /// # Examples
     /// ```
-    /// use sci_rs::special::Combinatorics;
+    /// use sci_rs::special::Comb;
     /// assert_eq!(5.choose(2), 10);
     /// assert_eq!(7.choose(3), 35);
     /// ```
@@ -31,21 +30,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// Does not actually compute using the factorial functions as this would likely lead to
     /// unnecessary overflows. Instead a different approach is taken which uses an iterative
     /// multiplicative formula.
-    fn choose(self, k: Self) -> Self {
-        self.checked_choose(k).unwrap()
-    }
-
-    /// Checked version of the [choose] function.
-    ///
-    /// # Examples
-    /// ```
-    /// use sci_rs::special::Combinatorics;
-    /// assert_eq!(5.checked_choose(2), Some(10));
-    /// assert_eq!(7.checked_choose(3), Some(35));
-    /// assert_eq!(50_u8.checked_choose(4), None); // Overflows a u8
-    /// ```
-    /// [choose]: crate::special::Combinatorics::choose
-    fn checked_choose(self, k: Self) -> Option<Self>;
+    fn choose(self, k: Self) -> Self;
 
     /// Number of combinations with repetition.
     ///
@@ -60,7 +45,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     ///
     /// # Examples
     /// ```
-    /// use sci_rs::special::Combinatorics;
+    /// use sci_rs::special::Comb;
     /// assert_eq!(5.choose_rep(2), 15);
     /// assert_eq!(10.choose_rep(3), 220);
     /// ```
@@ -72,21 +57,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// - [wiki]
     ///
     /// [wiki]: https://en.wikipedia.org/wiki/Combination#Number_of_combinations_with_repetition
-    fn choose_rep(self, k: Self) -> Self {
-        self.checked_choose_rep(k).unwrap()
-    }
-
-    /// Checked version of [choose_rep] to prevent overflow panics.
-    ///
-    /// # Examples
-    ///```
-    /// use sci_rs::special::Combinatorics;
-    /// assert_eq!(5.checked_choose_rep(2), Some(15));
-    /// assert_eq!(10.checked_choose_rep(3), Some(220));
-    /// assert_eq!(12_u8.checked_choose_rep(3), None); // Overflows a u8
-    /// ```
-    /// [choose_rep]: crate::special::Combinatorics::choose_rep
-    fn checked_choose_rep(self, k: Self) -> Option<Self>;
+    fn choose_rep(self, k: Self) -> Self;
 
     /// Number of permutations of $n$ things taken $k$ at a time.
     ///
@@ -96,7 +67,7 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     /// $$
     /// # Examples
     /// ```
-    /// use sci_rs::special::Combinatorics;
+    /// use sci_rs::special::Comb;
     /// assert_eq!(5.perm(5), 120); // should be 5!
     /// assert_eq!(5.perm(0), 1);
     /// assert_eq!(6.perm(3), 6*5*4);
@@ -104,90 +75,117 @@ pub trait Combinatorics: Sized + CheckedMul + CheckedAdd {
     ///
     /// # Notes
     /// When $n$ < 0 or $k<0$, then $0$ is returned.
-    fn perm(self, k: Self) -> Self {
-        self.checked_perm(k).unwrap()
+    fn perm(self, k: Self) -> Self;
+}
+
+impl<T> Comb for T
+where
+    T: PrimInt + FromPrimitive,
+{
+    fn choose(self, k: Self) -> Self {
+        if k > self || self < Self::zero() || k < Self::zero() {
+            return Self::zero();
+        }
+        let m = self + Self::one();
+        let n_terms = (min(k, self - k) + Self::one()).to_usize().unwrap();
+        (1..n_terms).fold(T::one(), |result, i| {
+            result * (m - T::from_usize(i).unwrap()) / T::from_usize(i).unwrap()
+        })
     }
+
+    #[inline(always)]
+    fn choose_rep(self, k: Self) -> Self {
+        (self + k - Self::one()).choose(k)
+    }
+
+    fn perm(self, k: Self) -> Self {
+        if k > self || self < Self::zero() || k < Self::zero() {
+            return Self::zero();
+        }
+
+        let start = (self - k + Self::one()).to_usize().unwrap();
+        let end = (self + Self::one()).to_usize().unwrap();
+        (start..end).fold(T::one(), |result, val| result * T::from_usize(val).unwrap())
+    }
+}
+
+/// Checked combinatorics functions.
+pub trait CheckedComb: Sized {
+    /// Checked version of the [choose] function.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::CheckedComb;
+    /// assert_eq!(5.checked_choose(2), Some(10));
+    /// assert_eq!(7.checked_choose(3), Some(35));
+    /// assert_eq!(50_u8.checked_choose(4), None); // Overflows a u8
+    /// ```
+    /// [choose]: crate::special::Comb::choose
+    fn checked_choose(self, k: Self) -> Option<Self>;
+
+    /// Checked version of [choose_rep] to prevent overflow panics.
+    ///
+    /// # Examples
+    ///```
+    /// use sci_rs::special::CheckedComb;
+    /// assert_eq!(5.checked_choose_rep(2), Some(15));
+    /// assert_eq!(10.checked_choose_rep(3), Some(220));
+    /// assert_eq!(12_u8.checked_choose_rep(3), None); // Overflows a u8
+    /// ```
+    /// [choose_rep]: crate::special::Comb::choose_rep
+    fn checked_choose_rep(self, k: Self) -> Option<Self>;
 
     /// Checked version of [perm] to prevent overflow panics.
     ///
     /// # Examples
     ///```
-    /// use sci_rs::special::Combinatorics;
+    /// use sci_rs::special::CheckedComb;
     /// assert_eq!(154.checked_perm(154), None); //Should overflow since 154!
     /// assert_eq!(4.checked_perm(3), Some(4*3*2*1));
     /// ```
-    /// [perm]: crate::special::Combinatorics::perm
+    /// [perm]: crate::special::Comb::perm
     fn checked_perm(self, k: Self) -> Option<Self>;
 }
 
-macro_rules! combinatorics_primint_impl {
-    ($($T: ty)*) => ($(
-        impl Combinatorics for $T {
-            fn choose(self, k: Self) -> Self {
-                if k > self || self.is_negative() || k.is_negative() {
-                    return 0;
-                }
-                let m = self + 1;
-                let n_terms = min(k, self-k) + 1;
-
-                (1..n_terms).fold(1, |result, i| (result * (m-i))/i)
-            }
-
-            fn checked_choose(self, k: Self) -> Option<Self> {
-                if k > self || self.is_negative() || k.is_negative()  {
-                    return Some(0);
-                }
-
-                let m = self.checked_add(1)?;
-                let n_terms = min(k, self-k) + 1;
-
-                let mut result = 1;
-                for i in 1..n_terms {
-                    result = result.checked_mul(&(m-i))? / i;
-                }
-                Some(result)
-            }
-
-            fn choose_rep(self, k: Self) -> Self {
-                (self + k - 1).choose(k)
-            }
-
-            fn checked_choose_rep(self, k: Self) -> Option<Self> {
-                self.checked_add(k)?.checked_sub(1)?.checked_choose(k)
-            }
-
-            fn perm(self, k: Self) -> Self {
-                if k > self || self.is_negative() || k.is_negative() {
-                    return 0;
-                }
-
-                let start = self - k + 1;
-                let end = self + 1;
-                (start..end).fold(1, |result, val| result * val)
-            }
-
-            fn checked_perm(self, k: Self) -> Option<Self> {
-                if k > self || self.is_negative() || k.is_negative() {
-                    return Some(0);
-                }
-
-                let start = (self - k).checked_add(1)?;
-                let end = self.checked_add(1)?;
-
-                let mut result = 1;
-                for i in start..end {
-                    result = result.checked_mul(&i)?;
-                }
-                Some(result)
-            }
-
+impl<T> CheckedComb for T
+where
+    T: PrimInt + FromPrimitive,
+{
+    fn checked_choose(self, k: Self) -> Option<Self> {
+        if k > self || self < Self::zero() || k < Self::zero() {
+            return Some(Self::zero());
         }
-    )*)
-}
 
-combinatorics_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
-#[cfg(has_i128)]
-factorial_primint_impl! {u128 i128}
+        let m = self.checked_add(&Self::one())?;
+        let n_terms = (min(k, self - k) + Self::one()).to_usize()?;
+
+        let mut result = Self::one();
+        for i in 1..n_terms {
+            let i = T::from_usize(i)?;
+            result = result.checked_mul(&(m - i))? / i;
+        }
+        Some(result)
+    }
+    fn checked_choose_rep(self, k: Self) -> Option<Self> {
+        self.checked_add(&k)?
+            .checked_sub(&Self::one())?
+            .checked_choose(k)
+    }
+    fn checked_perm(self, k: Self) -> Option<Self> {
+        if k > self || self < Self::zero() || k < Self::zero() {
+            return Some(Self::zero());
+        }
+
+        let start = (self - k).checked_add(&Self::one())?.to_usize()?;
+        let end = self.checked_add(&Self::one())?.to_usize()?;
+
+        let mut result = Self::one();
+        for i in start..end {
+            result = result.checked_mul(&T::from_usize(i)?)?;
+        }
+        Some(result)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -199,7 +197,7 @@ mod tests {
         func: fn(T, T) -> T,
         checked_func: fn(T, T) -> Option<T>,
     ) where
-        T: GenericInt + num_traits::FromPrimitive + std::fmt::Debug,
+        T: PrimInt + FromPrimitive + std::fmt::Debug,
     {
         for (i, &val) in ref_values.iter().enumerate() {
             let i = T::from_usize(i).unwrap();
