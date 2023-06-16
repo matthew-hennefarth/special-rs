@@ -14,8 +14,10 @@ mod beta;
 mod combinatorics;
 mod factorial;
 mod gamma;
+mod tangent_num;
 
 pub use beta::*;
 pub use combinatorics::*;
 pub use factorial::*;
 pub use gamma::*;
+pub use tangent_num::*;

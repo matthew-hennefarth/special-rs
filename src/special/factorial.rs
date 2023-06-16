@@ -159,11 +159,7 @@ macro_rules! factorial_primint_impl {
     )*)
 }
 
-factorial_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
-#[cfg(has_u128)]
-factorial_primint_impl! {u128}
-#[cfg(has_i128)]
-factorial_primint_impl! {i128}
+factorial_primint_impl! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize}
 
 fn primint_factorial<T>(n: T) -> T
 where
@@ -275,7 +271,6 @@ macro_rules! impl_slow_checkedfactorial {
                 slow_checked_factorial2(self)
             }
 
-            // TODO finish extracting to some other function and calling that so remove warnings
             fn checked_factorialk(self, k: Self) -> Option<Self> {
                 slow_checked_factorialk(self, k)
             }
@@ -374,8 +369,8 @@ macro_rules! impl_maxfactorial {
     )*)
 }
 
-impl_maxfactorial!(u8, 5, 7; u16, 8, 12; u32, 12, 20; u64, 20, 33;);
-impl_maxfactorial!(i8, 5, 7; i16, 7, 11; i32, 12, 19; i64, 20, 33;);
+impl_maxfactorial!(u8, 5, 7; u16, 8, 12; u32, 12, 20; u64, 20, 33; u128, 34, 56;);
+impl_maxfactorial!(i8, 5, 7; i16, 7, 11; i32, 12, 19; i64, 20, 33; i128, 33, 55;);
 
 /// Computes the checked product between `start` and `stop` stepping
 /// with `step`. Catches overflow from multiplication or addition
@@ -466,6 +461,25 @@ mod tests {
     }
 
     #[test]
+    fn factorial_u128() {
+        assert_eq!(21_u128.factorial(), 51090942171709440000);
+        assert_eq!(22_u128.factorial(), 1124000727777607680000);
+        assert_eq!(23_u128.factorial(), 25852016738884976640000);
+        assert_eq!(24_u128.factorial(), 620448401733239439360000);
+        assert_eq!(25_u128.factorial(), 15511210043330985984000000);
+        assert_eq!(26_u128.factorial(), 403291461126605635584000000);
+        assert_eq!(27_u128.factorial(), 10888869450418352160768000000);
+        assert_eq!(28_u128.factorial(), 304888344611713860501504000000);
+        assert_eq!(29_u128.factorial(), 8841761993739701954543616000000);
+        assert_eq!(30_u128.factorial(), 265252859812191058636308480000000);
+        assert_eq!(31_u128.factorial(), 8222838654177922817725562880000000);
+        assert_eq!(32_u128.factorial(), 263130836933693530167218012160000000);
+        assert_eq!(33_u128.factorial(), 8683317618811886495518194401280000000);
+        assert_eq!(34_u128.factorial(), 295232799039604140847618609643520000000);
+        assert_eq!(35_u128.checked_factorial(), None);
+    }
+
+    #[test]
     fn factorial_i8() {
         assert_eq!(0_i8.factorial(), 1);
         assert_eq!(1_i8.factorial(), 1);
@@ -504,6 +518,24 @@ mod tests {
         assert_eq!(19_i64.factorial(), 121645100408832000);
         assert_eq!(20_i64.factorial(), 2432902008176640000);
         assert_eq!(21_i64.checked_factorial(), None);
+    }
+
+    #[test]
+    fn factorial_i128() {
+        assert_eq!(21_i128.factorial(), 51090942171709440000);
+        assert_eq!(22_i128.factorial(), 1124000727777607680000);
+        assert_eq!(23_i128.factorial(), 25852016738884976640000);
+        assert_eq!(24_i128.factorial(), 620448401733239439360000);
+        assert_eq!(25_i128.factorial(), 15511210043330985984000000);
+        assert_eq!(26_i128.factorial(), 403291461126605635584000000);
+        assert_eq!(27_i128.factorial(), 10888869450418352160768000000);
+        assert_eq!(28_i128.factorial(), 304888344611713860501504000000);
+        assert_eq!(29_i128.factorial(), 8841761993739701954543616000000);
+        assert_eq!(30_i128.factorial(), 265252859812191058636308480000000);
+        assert_eq!(31_i128.factorial(), 8222838654177922817725562880000000);
+        assert_eq!(32_i128.factorial(), 263130836933693530167218012160000000);
+        assert_eq!(33_i128.factorial(), 8683317618811886495518194401280000000);
+        assert_eq!(34_i128.checked_factorial(), None);
     }
 
     #[test]
@@ -561,6 +593,50 @@ mod tests {
     }
 
     #[test]
+    fn factorial2_u128() {
+        assert_eq!(21_u128.factorial2(), 13749310575);
+        assert_eq!(22_u128.factorial2(), 81749606400);
+        assert_eq!(23_u128.factorial2(), 316234143225);
+        assert_eq!(24_u128.factorial2(), 1961990553600);
+        assert_eq!(25_u128.factorial2(), 7905853580625);
+        assert_eq!(26_u128.factorial2(), 51011754393600);
+        assert_eq!(27_u128.factorial2(), 213458046676875);
+        assert_eq!(28_u128.factorial2(), 1428329123020800);
+        assert_eq!(29_u128.factorial2(), 6190283353629375);
+        assert_eq!(30_u128.factorial2(), 42849873690624000);
+        assert_eq!(31_u128.factorial2(), 191898783962510625);
+        assert_eq!(32_u128.factorial2(), 1371195958099968000);
+        assert_eq!(33_u128.factorial2(), 6332659870762850625);
+        assert_eq!(34_u128.factorial2(), 46620662575398912000);
+        assert_eq!(35_u128.factorial2(), 443286190953399543750);
+        assert_eq!(36_u128.factorial2(), 2517515779071541248000);
+        assert_eq!(37_u128.factorial2(), 21868785420367710825000);
+        assert_eq!(38_u128.factorial2(), 119581999505898209280000);
+        assert_eq!(39_u128.factorial2(), 1023459157673208866610000);
+        assert_eq!(40_u128.factorial2(), 5580493310275249766400000);
+        assert_eq!(41_u128.factorial2(), 47956371959544644035440000);
+        assert_eq!(42_u128.factorial2(), 263678308910505551462400000);
+        assert_eq!(43_u128.factorial2(), 2291248882511577437248800000);
+        assert_eq!(44_u128.factorial2(), 12762030151268468690780160000);
+        assert_eq!(45_u128.factorial2(), 112479490596022892374032000000);
+        assert_eq!(46_u128.factorial2(), 635974502538212023090544640000);
+        assert_eq!(47_u128.factorial2(), 5693192677860235629393312000000);
+        assert_eq!(48_u128.factorial2(), 32707260130536618330370867200000);
+        assert_eq!(49_u128.factorial2(), 297564203962828315562957107200000);
+        assert_eq!(50_u128.factorial2(), 1737573194434757848800952320000000);
+        assert_eq!(51_u128.factorial2(), 16068467013992729040399683788800000);
+        assert_eq!(52_u128.factorial2(), 95373462005641153034185605120000000);
+        assert_eq!(53_u128.factorial2(), 896451317622752251727561306112000000);
+        assert_eq!(54_u128.factorial2(), 5407675295719853377038323810304000000);
+        assert_eq!(55_u128.factorial2(), 51652671158263344028111865733120000000);
+        assert_eq!(
+            56_u128.factorial2(),
+            316594808222144143164789139439616000000
+        );
+        assert_eq!(57_u128.checked_factorial2(), None);
+    }
+
+    #[test]
     fn factorial2_i8() {
         assert_eq!(0_i8.factorial2(), 1);
         assert_eq!(1_i8.factorial2(), 1);
@@ -612,6 +688,33 @@ mod tests {
         assert_eq!(32_i64.factorial2(), 1371195958099968000);
         assert_eq!(33_i64.factorial2(), 6332659870762850625);
         assert_eq!(34_i64.checked_factorial2(), None);
+    }
+
+    #[test]
+    fn factorial2_i128() {
+        assert_eq!(34_i128.factorial2(), 46620662575398912000);
+        assert_eq!(35_i128.factorial2(), 443286190953399543750);
+        assert_eq!(36_i128.factorial2(), 2517515779071541248000);
+        assert_eq!(37_i128.factorial2(), 21868785420367710825000);
+        assert_eq!(38_i128.factorial2(), 119581999505898209280000);
+        assert_eq!(39_i128.factorial2(), 1023459157673208866610000);
+        assert_eq!(40_i128.factorial2(), 5580493310275249766400000);
+        assert_eq!(41_i128.factorial2(), 47956371959544644035440000);
+        assert_eq!(42_i128.factorial2(), 263678308910505551462400000);
+        assert_eq!(43_i128.factorial2(), 2291248882511577437248800000);
+        assert_eq!(44_i128.factorial2(), 12762030151268468690780160000);
+        assert_eq!(45_i128.factorial2(), 112479490596022892374032000000);
+        assert_eq!(46_i128.factorial2(), 635974502538212023090544640000);
+        assert_eq!(47_i128.factorial2(), 5693192677860235629393312000000);
+        assert_eq!(48_i128.factorial2(), 32707260130536618330370867200000);
+        assert_eq!(49_i128.factorial2(), 297564203962828315562957107200000);
+        assert_eq!(50_i128.factorial2(), 1737573194434757848800952320000000);
+        assert_eq!(51_i128.factorial2(), 16068467013992729040399683788800000);
+        assert_eq!(52_i128.factorial2(), 95373462005641153034185605120000000);
+        assert_eq!(53_i128.factorial2(), 896451317622752251727561306112000000);
+        assert_eq!(54_i128.factorial2(), 5407675295719853377038323810304000000);
+        assert_eq!(55_i128.factorial2(), 51652671158263344028111865733120000000);
+        assert_eq!(56_i128.checked_factorial2(), None);
     }
 
     #[test]

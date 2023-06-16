@@ -99,11 +99,7 @@ macro_rules! comb_primint_impl {
     )*)
 }
 
-comb_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
-#[cfg(has_u128)]
-comb_primint_impl! {u128}
-#[cfg(has_i128)]
-comb_primint_impl! {i128}
+comb_primint_impl! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize}
 
 fn primint_choose<T>(n: T, k: T) -> T
 where
@@ -198,11 +194,7 @@ macro_rules! checkedcomb_primint_impl {
     )*)
 }
 
-checkedcomb_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
-#[cfg(has_u128)]
-checkedcomb_primint_impl! {u128}
-#[cfg(has_i128)]
-checkedcomb_primint_impl! {i128}
+checkedcomb_primint_impl! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize}
 
 fn primint_checked_choose<T>(n: T, k: T) -> Option<T>
 where
