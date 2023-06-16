@@ -236,17 +236,17 @@ macro_rules! impl_checkedfactorial {
         impl CheckedFactorial for $T {
             #[inline(always)]
             fn checked_factorial(self) -> Option<Self> {
-                checked_factorial(self)
+                slow_checked_factorial(self)
             }
 
             #[inline(always)]
             fn checked_factorial2(self) -> Option<Self> {
-                checked_factorial2(self)
+                slow_checked_factorial2(self)
             }
 
             // TODO finish extracting to some other function and calling that so remove warnings
             fn checked_factorialk(self, k: Self) -> Option<Self> {
-                checked_factorialk(self, k)
+                slow_checked_factorialk(self, k)
             }
         }
     )*)
@@ -254,7 +254,7 @@ macro_rules! impl_checkedfactorial {
 
 impl_checkedfactorial!(usize isize);
 
-fn checked_factorial<T>(n: T) -> Option<T>
+fn slow_checked_factorial<T>(n: T) -> Option<T>
 where
     T: PrimInt + FromPrimitive,
 {
@@ -266,10 +266,12 @@ where
         return T::from_u64(FACTORIAL_CACHE[n.to_usize()?]);
     }
     (checked_partial_product(n - T::from_usize(FACTORIAL_CACHE_LEN - 1)?, n, T::one())?)
-        .checked_mul(&checked_factorial(n - T::from_usize(FACTORIAL_CACHE_LEN)?)?)
+        .checked_mul(&slow_checked_factorial(
+            n - T::from_usize(FACTORIAL_CACHE_LEN)?,
+        )?)
 }
 
-fn checked_factorial2<T>(n: T) -> Option<T>
+fn slow_checked_factorial2<T>(n: T) -> Option<T>
 where
     T: PrimInt + FromPrimitive,
 {
@@ -280,17 +282,17 @@ where
     if n < T::from_usize(FACTORIAL2_CACHE_LEN)? {
         return T::from_u64(FACTORIAL2_CACHE[n.to_usize()?]);
     }
-    (checked_partial_product(
+    checked_partial_product(
         n - T::from_usize(FACTORIAL2_CACHE_LEN - 1)?,
         n,
         T::from_usize(2).unwrap(),
-    )?)
-    .checked_mul(&checked_factorial2(
+    )?
+    .checked_mul(&slow_checked_factorial2(
         n - T::from_usize(FACTORIAL2_CACHE_LEN)?,
     )?)
 }
 
-fn checked_factorialk<T>(n: T, k: T) -> Option<T>
+fn slow_checked_factorialk<T>(n: T, k: T) -> Option<T>
 where
     T: PrimInt + FromPrimitive,
 {
@@ -306,14 +308,14 @@ where
 
     if n > max_window {
         return (checked_partial_product(n - max_window, n, k)?)
-            .checked_mul(&checked_factorialk(n - max_window - T::one(), k)?);
+            .checked_mul(&slow_checked_factorialk(n - max_window - T::one(), k)?);
     }
     let window = k * (n / k);
     let window = if window == n { window - k } else { window };
     checked_partial_product(n - window, n, k)
 }
 
-trait MaxFactorial: PrimInt + FromPrimitive {
+trait MaxFactorial {
     const MAX_FACTORIAL: Self;
     const MAX_FACTORIAL2: Self;
 }
@@ -332,7 +334,7 @@ impl_maxfactorial!(i8, 5, 7; i16, 7, 11; i32, 12, 19; i64, 20, 33;);
 
 impl<Int> CheckedFactorial for Int
 where
-    Int: Factorial + MaxFactorial,
+    Int: Factorial + MaxFactorial + PrimInt + FromPrimitive,
 {
     fn checked_factorial(self) -> Option<Self> {
         if self > Self::MAX_FACTORIAL {
