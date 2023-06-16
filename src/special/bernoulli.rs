@@ -3,133 +3,129 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::Comb;
-use num_traits::{cast, Float, FromPrimitive, PrimInt};
-use std::ops::AddAssign;
+use crate::special::ZigZag;
+use num_traits::{Float, FromPrimitive, PrimInt};
 
-pub trait Bernoulli {
-    fn bernoulli<Output>(self) -> Vec<Output>
+/// The Bernoulli numbers.
+pub trait Bernoulli: Sized {
+    /// Computes the first $2n$ Bernoulli numbers, omitting the odd ones.
+    /// $$
+    /// \sum_{n\geq 0} B_n \frac{z^n}{n!} = \frac{z}{e^z - 1}
+    /// $$
+    /// The Bernoulli numbers ($B_n$) are rational numbers defined by the above generating function. The first few Bernoulli numbers are
+    /// $$
+    /// B_0 = 1, B_1 = \pm \frac{1}{2}, B_2 = \frac{1}{6}, B_3 = 0, B_4 = -\frac{1}{30}
+    /// $$
+    /// Note that for all odd $n > 1$, $B_n = 0$. The reason for the $\pm$ for $B_1$ comes from the two conventions in the literature. Because of these two facts, we never compute the odd Bernoulli numbers. That is given an input $n$, we compute $B_0,\ldots, B_{2n}$ and return as a vector. For more details on the Bernoulli numbers, see the [wiki] and [dlmf] pages.
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Bernoulli;
+    /// assert_eq!(0.bernoulli_b2n::<f32>(), vec![1.0]); // [B_0]
+    /// assert_eq!(2.bernoulli_b2n::<f32>(), vec![1.0, 1.0/6.0, -1.0/30.0]); // [B_0, B_2, B_4]
+    /// ```
+    /// Of course, we can control the input and output size as
+    /// ```
+    /// use sci_rs::special::Bernoulli;
+    /// assert_eq!(1_i8.bernoulli_b2n::<f64>(), vec![1.0, 1.0/6.0]); // [B_0, B_2]
+    /// assert_eq!(2_u64.bernoulli_b2n::<f64>(), vec![1.0, 1.0/6.0, -1.0/30.0]); // [B_0, B_2, B_4]
+    /// ```
+    /// # Notes
+    /// The implementation here is based on the TangentNumber algorithm described in section 6.2 of "Fast Computation of Bernoulli, Tangent and Secant Numbers" ([arxiv:1109.0286]). These are computed using only integer arithmetic and are numerically stable. It then uses the following relationship to build the Bernoulli numbers from the tangent numbers:
+    /// $$
+    /// T_n = (-1)^{n-1}2^{2n}\left(2^{2n} - 1\right)\frac{B_{2n}}{2n}
+    /// $$
+    /// This leads to highly accurate, floating-point Bernoulli numbers.
+    ///
+    /// [wiki]: https://en.wikipedia.org/wiki/Bernoulli_number
+    /// [dlmf]: https://dlmf.nist.gov/24.7#i
+    /// [arxiv:1109.0286]: https://doi.org/10.48550/arXiv.1108.0286
+    fn bernoulli_b2n<Output>(self) -> Vec<Output>
     where
-        Output: Float + AddAssign + FromPrimitive;
+        Output: Float + FromPrimitive;
 }
 
-impl<Int> Bernoulli for Int
-where
-    Int: PrimInt + FromPrimitive,
-{
-    fn bernoulli<Output>(self) -> Vec<Output>
-    where
-        Output: Float + AddAssign + FromPrimitive,
-    {
-        bernoulli_rec::<Self, Output>(self)
-    }
-}
-
-/// Returns first $n$ Bernoulli numbers using recurssion.
-///
-/// bernoulli_rec(3) -> [0.0, -0.5, 1/6, 0.0] (list of 4)
-pub(crate) fn bernoulli_rec<T, Output>(n: T) -> Vec<Output>
-where
-    T: PrimInt + FromPrimitive,
-    Output: Float + AddAssign + FromPrimitive,
-{
-    assert!(n >= T::zero());
-
-    let result_len = (n + T::one()).to_usize().unwrap();
-    const CACHE_SIZE: usize = 4;
-    let mut result = vec![
-        Output::one(),
-        cast(-0.5).unwrap(),
-        cast(1.0 / 6.0).unwrap(),
-        Output::zero(),
-    ];
-    debug_assert_eq!(result.len(), CACHE_SIZE);
-
-    if result_len <= CACHE_SIZE {
-        return result[..result_len].to_vec();
-    }
-
-    result.reserve_exact(result_len - CACHE_SIZE);
-
-    for i in CACHE_SIZE..result_len {
-        if i % 2 == 1 {
-            result.push(Output::zero());
-        } else {
-            let np1 = i + 1; // n+1
-            let mut bn = Output::zero(); // B_n
-            for (k, bk) in result.iter().enumerate() {
-                bn += Output::from(np1.choose(k)).unwrap() * *bk;
+macro_rules! bernoulli_impl {
+    ($($T: ty)*) => ($(
+        impl Bernoulli for $T {
+            #[inline(always)]
+            fn bernoulli_b2n<Output>(self) -> Vec<Output>
+            where
+                Output: Float + FromPrimitive,
+            {
+                bernoulli_b2n_zag::<Self, Output>(self)
             }
-            bn = -bn / Output::from_usize(np1).unwrap();
-            result.push(bn);
         }
+    )*)
+}
+
+bernoulli_impl! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize}
+
+/// 0 -> [1.0]
+/// 1 -> [1.0, 1/6]
+/// 2 -> [1.0, 1/6, -1.0 / 30.0]
+///
+/// Uses algorithm from [here](https://arxiv.org/abs/1108.0286), specifically eq. 14.
+fn bernoulli_b2n_zag<T, Output>(n: T) -> Vec<Output>
+where
+    T: PrimInt + FromPrimitive + ZigZag,
+    Output: Float + FromPrimitive,
+{
+    if n.is_zero() {
+        return vec![Output::one()];
     }
-    result
+
+    let zags = n.zag();
+
+    let modified_zags = zags
+        .iter()
+        .enumerate()
+        .map(|(n, &t)| {
+            let j = 2 * (n + 1) as u32;
+            let abs_bn = Output::from(t * T::from_u32(j).unwrap()).unwrap()
+                / Output::from_usize(4_usize.pow(j) - 2_usize.pow(j)).unwrap();
+            if n & 1 == 0 {
+                abs_bn
+            } else {
+                -abs_bn
+            }
+        })
+        .collect::<Vec<Output>>();
+
+    [vec![Output::one()], modified_zags].concat()
+    //return zags.iter().map(|&z| Output::from(z).unwrap()).collect();
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const PRECISION: f64 = 1E-14;
-
     #[test]
-    fn test_bernoulli() {
-        for i in 0..4 {
-            assert_eq!(i.bernoulli::<f32>().len(), i + 1);
-        }
-
-        assert_almost_eq!(
-            *4.bernoulli::<f64>().last().unwrap(),
-            -1.0 / 30.0,
-            PRECISION
+    fn test_bernoulli_zag() {
+        assert_eq!(bernoulli_b2n_zag::<_, f64>(0), vec![1.0_f64]);
+        assert_eq!(bernoulli_b2n_zag::<_, f64>(1), vec![1.0_f64, 1.0 / 6.0]);
+        assert_eq!(
+            bernoulli_b2n_zag::<usize, f64>(2),
+            vec![1.0_f64, 1.0 / 6.0, -1.0 / 30.0]
         );
-        assert_almost_eq!(*6.bernoulli::<f64>().last().unwrap(), 1.0 / 42.0, PRECISION);
-        assert_almost_eq!(
-            *8.bernoulli::<f64>().last().unwrap(),
-            -1.0 / 30.0,
-            PRECISION
+        assert_eq!(
+            bernoulli_b2n_zag::<usize, f64>(3),
+            vec![1.0_f64, 1.0 / 6.0, -1.0 / 30.0, 1.0 / 42.0]
         );
-        assert_almost_eq!(
-            *10.bernoulli::<f64>().last().unwrap(),
-            5.0 / 66.0,
-            PRECISION
+        assert_eq!(
+            bernoulli_b2n_zag::<usize, f64>(4),
+            vec![1.0_f64, 1.0 / 6.0, -1.0 / 30.0, 1.0 / 42.0, -1.0 / 30.0]
         );
-
-        for i in (5..=15).step_by(2) {
-            assert_eq!(*i.bernoulli::<f64>().last().unwrap(), 0.0);
-        }
-    }
-
-    #[test]
-    fn test_bernoulli_rec() {
-        for i in 0..4 {
-            assert_eq!(bernoulli_rec::<usize, f32>(i).len(), i + 1);
-        }
-
-        assert_almost_eq!(
-            *bernoulli_rec::<usize, f64>(4).last().unwrap(),
-            -1.0 / 30.0,
-            PRECISION
+        assert_eq!(
+            bernoulli_b2n_zag::<usize, f64>(5),
+            vec![
+                1.0_f64,
+                1.0 / 6.0,
+                -1.0 / 30.0,
+                1.0 / 42.0,
+                -1.0 / 30.0,
+                5.0 / 66.0
+            ]
         );
-        assert_almost_eq!(
-            *bernoulli_rec::<usize, f64>(6).last().unwrap(),
-            1.0 / 42.0,
-            PRECISION
-        );
-        assert_almost_eq!(
-            *bernoulli_rec::<usize, f64>(8).last().unwrap(),
-            -1.0 / 30.0,
-            PRECISION
-        );
-        assert_almost_eq!(
-            *bernoulli_rec::<usize, f64>(10).last().unwrap(),
-            5.0 / 66.0,
-            PRECISION
-        );
-
-        for i in (5..=15).step_by(2) {
-            assert_eq!(*bernoulli_rec::<usize, f64>(i).last().unwrap(), 0.0);
-        }
     }
 }
