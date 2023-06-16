@@ -138,56 +138,87 @@ const FACTORIAL2_CACHE: [u64; FACTORIAL2_CACHE_LEN] = [
     6190283353629375, 42849873690624000, 191898783962510625, 1371195958099968000,
 ];
 
-impl<Int> Factorial for Int
+macro_rules! factorial_primint_impl {
+    ($($T: ty)*) => ($(
+        impl Factorial for $T {
+            #[inline(always)]
+            fn factorial(self) -> Self {
+                primint_factorial(self)
+            }
+
+            #[inline(always)]
+            fn factorial2(self) -> Self {
+                primint_factorial2(self)
+            }
+
+            #[inline(always)]
+            fn factorialk(self, k: Self) -> Self {
+                primint_factorialk(self, k)
+            }
+        }
+    )*)
+}
+
+factorial_primint_impl! {u8 u16 u32 u64 usize i8 i16 i32 i64 isize}
+#[cfg(has_u128)]
+factorial_primint_impl! {u128}
+#[cfg(has_i128)]
+factorial_primint_impl! {i128}
+
+fn primint_factorial<T>(n: T) -> T
 where
-    Int: PrimInt + FromPrimitive,
+    T: PrimInt + FromPrimitive,
 {
-    fn factorial(self) -> Self {
-        if self < Self::zero() {
-            return Self::zero();
-        }
-        if self < Self::from_usize(FACTORIAL_CACHE_LEN).unwrap() {
-            return Self::from_u64(FACTORIAL_CACHE[self.to_usize().unwrap()]).unwrap();
-        }
-        partial_product(
-            self - Self::from_usize(FACTORIAL_CACHE_LEN - 1).unwrap(),
-            self,
-            Self::one(),
-        ) * (self - Self::from_usize(FACTORIAL_CACHE_LEN).unwrap()).factorial()
+    if n < T::zero() {
+        return T::zero();
     }
-
-    fn factorial2(self) -> Self {
-        if self < Self::zero() {
-            return Self::zero();
-        }
-        if self < Self::from_usize(FACTORIAL2_CACHE_LEN).unwrap() {
-            return Self::from_u64(FACTORIAL2_CACHE[self.to_usize().unwrap()]).unwrap();
-        }
-        partial_product(
-            self - Self::from_usize(FACTORIAL2_CACHE_LEN - 1).unwrap(),
-            self,
-            Self::from_usize(2).unwrap(),
-        ) * (self - Self::from_usize(FACTORIAL2_CACHE_LEN).unwrap()).factorial2()
+    if n < T::from_usize(FACTORIAL_CACHE_LEN).unwrap() {
+        return T::from_u64(FACTORIAL_CACHE[n.to_usize().unwrap()]).unwrap();
     }
+    partial_product(
+        n - T::from_usize(FACTORIAL_CACHE_LEN - 1).unwrap(),
+        n,
+        T::one(),
+    ) * primint_factorial(n - T::from_usize(FACTORIAL_CACHE_LEN).unwrap())
+}
 
-    fn factorialk(self, k: Self) -> Self {
-        if self < Self::zero() {
-            return Self::zero();
-        }
-        assert!(k > Self::zero());
-        if self.is_zero() {
-            return Self::one();
-        }
-        let max_window = k * Self::from_usize(MAX_MULTIPLICATIONS).unwrap();
-
-        if self > max_window {
-            return partial_product(self - max_window, self, k)
-                * (self - max_window - Self::one()).factorialk(k);
-        }
-        let window = k * (self / k);
-        let window = if window == self { window - k } else { window };
-        partial_product(self - window, self, k)
+fn primint_factorial2<T>(n: T) -> T
+where
+    T: PrimInt + FromPrimitive,
+{
+    if n < T::zero() {
+        return T::zero();
     }
+    if n < T::from_usize(FACTORIAL2_CACHE_LEN).unwrap() {
+        return T::from_u64(FACTORIAL2_CACHE[n.to_usize().unwrap()]).unwrap();
+    }
+    partial_product(
+        n - T::from_usize(FACTORIAL2_CACHE_LEN - 1).unwrap(),
+        n,
+        T::from_usize(2).unwrap(),
+    ) * primint_factorial2(n - T::from_usize(FACTORIAL2_CACHE_LEN).unwrap())
+}
+
+fn primint_factorialk<T>(n: T, k: T) -> T
+where
+    T: PrimInt + FromPrimitive,
+{
+    if n < T::zero() {
+        return T::zero();
+    }
+    assert!(k > T::zero());
+    if n.is_zero() {
+        return T::one();
+    }
+    let max_window = k * T::from_usize(MAX_MULTIPLICATIONS).unwrap();
+
+    if n > max_window {
+        return partial_product(n - max_window, n, k)
+            * primint_factorialk(n - max_window - T::one(), k);
+    }
+    let window = k * (n / k);
+    let window = if window == n { window - k } else { window };
+    partial_product(n - window, n, k)
 }
 
 /// Checked Factorial functions to prevent overflow.
@@ -231,7 +262,7 @@ pub trait CheckedFactorial: Factorial {
     fn checked_factorialk(self, k: Self) -> Option<Self>;
 }
 
-macro_rules! impl_checkedfactorial {
+macro_rules! impl_slow_checkedfactorial {
     ($($T: ty)*) => ($(
         impl CheckedFactorial for $T {
             #[inline(always)]
@@ -252,7 +283,7 @@ macro_rules! impl_checkedfactorial {
     )*)
 }
 
-impl_checkedfactorial!(usize isize);
+impl_slow_checkedfactorial!(usize isize);
 
 fn slow_checked_factorial<T>(n: T) -> Option<T>
 where
@@ -315,62 +346,36 @@ where
     checked_partial_product(n - window, n, k)
 }
 
-trait MaxFactorial {
-    const MAX_FACTORIAL: Self;
-    const MAX_FACTORIAL2: Self;
-}
-
 macro_rules! impl_maxfactorial {
     ($($T: ty, $mf: expr, $mf2: expr;)*) => ($(
-        impl MaxFactorial for $T {
-            const MAX_FACTORIAL: Self = $mf;
-            const MAX_FACTORIAL2: Self = $mf2;
+
+        impl CheckedFactorial for $T {
+            #[inline(always)]
+            fn checked_factorial(self) -> Option<Self> {
+                if self > $mf {
+                    return None;
+                }
+                Some(self.factorial())
+            }
+
+            #[inline(always)]
+            fn checked_factorial2(self) -> Option<Self> {
+                if self > $mf2 {
+                    return None;
+                }
+                Some(self.factorial2())
+            }
+
+            #[inline(always)]
+            fn checked_factorialk(self, k: Self) -> Option<Self> {
+                slow_checked_factorialk(self, k)
+            }
         }
     )*)
 }
 
 impl_maxfactorial!(u8, 5, 7; u16, 8, 12; u32, 12, 20; u64, 20, 33;);
 impl_maxfactorial!(i8, 5, 7; i16, 7, 11; i32, 12, 19; i64, 20, 33;);
-
-impl<Int> CheckedFactorial for Int
-where
-    Int: Factorial + MaxFactorial + PrimInt + FromPrimitive,
-{
-    fn checked_factorial(self) -> Option<Self> {
-        if self > Self::MAX_FACTORIAL {
-            return None;
-        }
-        Some(self.factorial())
-    }
-
-    fn checked_factorial2(self) -> Option<Self> {
-        if self > Self::MAX_FACTORIAL2 {
-            return None;
-        }
-        Some(self.factorial2())
-    }
-
-    fn checked_factorialk(self, k: Self) -> Option<Self> {
-        if self < Self::zero() {
-            return Some(Self::zero());
-        }
-
-        assert!(k > Self::zero());
-        if self.is_zero() {
-            return Some(Self::one());
-        }
-
-        let max_window = k.checked_mul(&Self::from_usize(MAX_MULTIPLICATIONS)?)?;
-
-        if self > max_window {
-            return (checked_partial_product(self - max_window, self, k)?)
-                .checked_mul(&(self - max_window - Self::one()).checked_factorialk(k)?);
-        }
-        let window = k * (self / k);
-        let window = if window == self { window - k } else { window };
-        checked_partial_product(self - window, self, k)
-    }
-}
 
 /// Computes the checked product between `start` and `stop` stepping
 /// with `step`. Catches overflow from multiplication or addition
