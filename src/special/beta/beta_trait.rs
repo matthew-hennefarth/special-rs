@@ -36,13 +36,47 @@ pub trait Beta {
     /// [wiki]: https://en.wikipedia.org/wiki/Beta_function
     /// [cephes]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/beta.c
     fn beta(self, b: Self) -> Self;
+
+    /// Natural log of the absolute value of the [Beta] function.
+    /// $$
+    /// \ln\left|B(a,b)\right|
+    /// $$
+    ///
+    /// # Examples
+    /// ```
+    /// use sci_rs::special::Beta;
+    /// let exp = -1.7917594692280549573127;
+    /// let diff = (2.0f32.lbeta(2.0) - exp).abs();
+    /// assert!(diff < 1.0e-7);
+    /// ```
+    /// ```
+    /// use sci_rs::special::{Beta, Gamma};
+    /// let gamma_version = 2.3_f64.lgamma() + 1.3.lgamma() - 3.6.lgamma();
+    /// let beta_version = 2.3_f64.lbeta(1.3);
+    /// // Always should give the same value
+    /// assert!((gamma_version - beta_version).abs() < 1.0e-7);
+    /// ```
+    ///
+    /// # Notes
+    /// In general this is implemented as the natural logs of the [Gamma] functions, but with some care taken to prevent overflow. Note that for large values, an asymptotic expansion is used instead. This implementation largely follows that from the [cephes] library in SciPy (v 1.10.1).
+    ///
+    /// [Beta]: crate::special::Beta::beta
+    /// [Gamma]: crate::special::Gamma::gamma
+    /// [cephes]: https://github.com/scipy/scipy/blob/main/scipy/special/cephes/beta.c
+    fn lbeta(self, b: Self) -> Self;
 }
 
 macro_rules! float_beta_impl {
     ($($T: ty)*) => ($(
         impl Beta for $T {
+            #[inline(always)]
             fn beta(self, b: Self) -> Self {
                 r_beta(self, b)
+            }
+
+            #[inline(always)]
+            fn lbeta(self, b: Self) -> Self {
+                r_lbeta(self, b)
             }
         }
     )*)
