@@ -7,24 +7,9 @@ use crate::special::gamma_util::is_gamma_pole;
 use std::mem;
 use std::ops::{AddAssign, SubAssign};
 
+use crate::special::beta_util::{r_lbeta_asymp, RealBetaConsts};
 use crate::special::RealGamma;
 use num_traits::{cast, Float, FloatConst};
-
-pub(crate) trait RealBetaConsts {
-    const ASYMP_FACTOR: Self;
-    const MAX_GAMMA: Self;
-}
-
-macro_rules! float_rbetaconsts_impl {
-    ($($T: ty)*) => ($(
-        impl RealBetaConsts for $T {
-            const ASYMP_FACTOR: Self = 1.0E6;
-            const MAX_GAMMA: Self = 171.624376956302725;
-        }
-    )*)
-}
-
-float_rbetaconsts_impl! {f32 f64}
 
 /// For large arguments, the log of the function is evaluated using lgam() then exponentiated.
 ///
@@ -45,9 +30,10 @@ where
     }
 
     // a > ASYMP_FACTOR * max(|b|, 1)
-    if a.abs() > T::ASYMP_FACTOR * b.abs() && a.abs() > T::ASYMP_FACTOR {
+    if a.abs() > T::ASYMP_FACTOR * b.abs() && a > T::ASYMP_FACTOR {
         // Avoid loss of precision in lgamma(a+b) - lgamma(a)
-        return r_lbeta_asymp(a, b);
+        let y = r_lbeta_asymp(a, b);
+        return b.gammasgn() * y.exp();
     }
 
     let y = a + b;
@@ -57,8 +43,8 @@ where
     }
 
     let y = y.gamma();
-    let a = a.gamma();
-    let b = b.gamma();
+    a = a.gamma();
+    b = b.gamma();
 
     // Some care to avoid overflow..
     if (a.abs() - y.abs()).abs() > (b.abs() - y.abs()).abs() {
@@ -87,26 +73,6 @@ where
     sign * r_beta(T::one() - a - b, b)
 }
 
-/// Asymptotic expansion for  ln(|B(a, b)|) for a > ASYMP_FACTOR*max(|b|, 1).
-/// Taken from the Cephes library, and an unknown source.
-fn r_lbeta_asymp<T>(a: T, b: T) -> T
-where
-    T: Float + RealGamma + RealGamma + FloatConst + SubAssign + AddAssign,
-{
-    let mut r = b.lgamma();
-    let sign = b.gammasgn();
-
-    let two = T::one() + T::one();
-    let twelve = cast::<usize, T>(12).unwrap();
-
-    r -= b * a.ln();
-    r += b * (T::one() - b) / (two * a);
-    r += b * (T::one() - b) * (T::one() - two * b) / (twelve * a * a);
-    r -= b * b * (T::one() - b) * (T::one() - b) / (twelve * a * a * a);
-
-    sign * r.exp()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -129,8 +95,14 @@ mod tests {
 
         // check asymptote (From SciPy v 1.10.1)
         assert_almost_eq!(r_beta(1.1E6, 0.5), 0.0016899686300445731797, PRECISION);
+        assert_eq!(r_beta(0.5, 1.1E6), r_beta(1.1E6, 0.5));
         assert_almost_eq!(r_beta(1.1e6, 0.7), 0.0000766158047285244695, PRECISION);
         assert_almost_eq!(r_beta(122000.64, 1.1), 0.0000024173646023778890, PRECISION);
+        assert_almost_eq!(
+            r_beta(294882.12388, -1.12),
+            10793397.2536159846931695938110,
+            PRECISION
+        );
 
         // Check Max Gamma?
         assert_almost_eq!(
@@ -142,6 +114,7 @@ mod tests {
         // Check for negative integers
         assert_eq!(r_beta(-1.0, 1.0), -1.0);
         assert_eq!(r_beta(-2.0, 1.0), -0.5);
+        assert_eq!(r_beta(1.0, -2.0), -0.5);
         assert_eq!(r_beta(-1.0, 3.0), f64::INFINITY);
     }
 }

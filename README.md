@@ -6,7 +6,8 @@ A scientific library written in pure Rust inspired by [SciPy].
 It is currently in its infancy. Working on special function implementations. Currently has
 - Factorial, Double Factorial, K-Factorial
 - Combinations and Permutations
-- Gamma (real and complex)
+- Bernoulli, Tangent, and Secant numbers
+- Gamma Function (real and complex)
 
 ## License
 

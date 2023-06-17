@@ -4,10 +4,9 @@
 //**********************************************************************
 
 use crate::special::beta::real_beta_impl::*;
-use crate::special::Gamma;
 
 /// Beta and related functions for real-valued arguments.
-pub trait Beta: Gamma {
+pub trait Beta {
     /// The Beta function.
     /// $$
     /// B(a,b) = \int^{1}_{0} t^{a-1}(1-t)^{b-1}dt = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}

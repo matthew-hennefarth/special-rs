@@ -4,7 +4,7 @@
 //**********************************************************************
 
 use crate::special::gamma::gamma_util::is_gamma_pole;
-use crate::special::gamma::{
+use crate::special::gamma::gamma_util::{
     euler_reflection_prefactor, eval_poly, gamma_stirling_series, StirlingSeriesCoefficients,
 };
 use crate::traits::FloatSciConst;

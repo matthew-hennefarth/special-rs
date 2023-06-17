@@ -21,7 +21,10 @@
 //! A scientific library written in pure Rust inspired by [SciPy].
 //!
 //! # Features
-//! Working on!
+//! - Factorial, Double Factorial, K-Factorial
+//! - Combinations and Permutations
+//! - Bernoulli, Tangent, and Secant numbers
+//! - Gamma Function (real and complex)
 //!
 //! [SciPy]: https://scipy.org/
 

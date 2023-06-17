@@ -9,7 +9,6 @@ mod gamma_trait;
 pub(crate) mod gamma_util;
 
 pub use gamma_trait::*;
-use gamma_util::*;
 
 mod c_gamma;
 mod r_gamma;
