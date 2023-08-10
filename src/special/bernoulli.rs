@@ -61,11 +61,16 @@ macro_rules! bernoulli_impl {
 
 bernoulli_impl! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize}
 
+/// Expected output is the first $2n$ Bernoulli numbers such that:
+///
 /// 0 -> [1.0]
 /// 1 -> [1.0, 1/6]
 /// 2 -> [1.0, 1/6, -1.0 / 30.0]
 ///
-/// Uses algorithm from [here](https://arxiv.org/abs/1108.0286), specifically eq. 14.
+/// Uses algorithm from [here](https://arxiv.org/abs/1108.0286), specifically eq. 14. Essentially using the relationship that
+/// $$
+/// T_n = (-1)^{n-1}2^{2n}\left(2^{2n} - 1\right)\frac{B_{2n}}{2n}
+/// $$
 fn bernoulli_b2n_zag<T, Output>(n: T) -> Vec<Output>
 where
     T: PrimInt + FromPrimitive + ZigZag,

@@ -39,7 +39,7 @@ pub trait Beta {
 
     /// Natural log of the absolute value of the [Beta] function.
     /// $$
-    /// \ln\left|B(a,b)\right|
+    /// \ln\left|B(a,b)\right| = \ln\left|\Gamma(a)\right| + \ln\left|\Gamma(b)\right| - \ln\left|\Gamma(a+b)\right|
     /// $$
     ///
     /// # Examples
