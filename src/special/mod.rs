@@ -12,13 +12,17 @@
 mod bernoulli;
 mod beta;
 mod combinatorics;
+mod erf;
 mod factorial;
 mod gamma;
+mod tools;
 mod zigzag;
 
 pub use bernoulli::*;
 pub use beta::*;
 pub use combinatorics::*;
+pub use erf::*;
 pub use factorial::*;
 pub use gamma::*;
+pub(crate) use tools::*;
 pub use zigzag::*;

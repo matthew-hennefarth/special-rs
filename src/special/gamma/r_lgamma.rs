@@ -4,9 +4,10 @@
 //**********************************************************************
 
 use crate::special::gamma::gamma_util::{
-    euler_reflection_prefactor, eval_poly, is_gamma_pole, lngamma_stirling, LnGammaStirlingConsts,
+    euler_reflection_prefactor, is_gamma_pole, lngamma_stirling, LnGammaStirlingConsts,
 };
 use crate::special::gamma::r_gamma::RealGammaConsts;
+use crate::special::tools::eval_poly;
 use crate::traits::FloatSciConst;
 use num_traits::Float;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};

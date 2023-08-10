@@ -5,8 +5,9 @@
 
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
-use crate::special::gamma::gamma_util::{euler_reflection_prefactor, eval_cheby, is_gamma_pole};
+use crate::special::gamma::gamma_util::{euler_reflection_prefactor, is_gamma_pole};
 use crate::special::gamma::real_gamma_impl::*;
+use crate::special::tools::eval_cheby;
 use crate::traits::FloatSciConst;
 use num_traits::Float;
 

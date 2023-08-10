@@ -3,9 +3,8 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::gamma::gamma_util::{
-    eval_poly, is_gamma_pole, lngamma_stirling, LnGammaStirlingConsts,
-};
+use crate::special::gamma::gamma_util::{is_gamma_pole, lngamma_stirling, LnGammaStirlingConsts};
+use crate::special::tools::eval_poly;
 use crate::traits::FloatSciConst;
 use num_complex::{Complex, ComplexFloat};
 use num_traits::{Float, FloatConst, One, Zero};

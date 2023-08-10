@@ -5,8 +5,9 @@
 
 use crate::special::gamma::gamma_util::is_gamma_pole;
 use crate::special::gamma::gamma_util::{
-    euler_reflection_prefactor, eval_poly, gamma_stirling_series, StirlingSeriesCoefficients,
+    euler_reflection_prefactor, gamma_stirling_series, StirlingSeriesCoefficients,
 };
+use crate::special::tools::eval_poly;
 use crate::traits::FloatSciConst;
 use num_traits::{cast, Float};
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
