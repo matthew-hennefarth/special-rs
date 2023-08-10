@@ -219,6 +219,12 @@ pub trait RealGamma: Gamma {
     /// [wiki]: https://en.wikipedia.org/wiki/Falling_and_rising_factorials
     /// [cephes]: https://github.com/scipy/scipy/blob/46081a85c3a6ca4c45610f4207abf791985e17e0/scipy/special/cephes/poch.c
     fn poch(self, m: Self) -> Self;
+
+    /// Regularized lower incomplete gamma function.
+    /// $$
+    /// \gamma(s,x) = \frac{1}{\Gamma(s)}\int^x_0 t^{s-1}e^{-t}dt
+    /// $$
+    fn gammainc(self, x: Self) -> Self;
 }
 
 macro_rules! float_gamma_impl {
@@ -257,6 +263,11 @@ macro_rules! float_gamma_impl {
             #[inline(always)]
             fn poch(self, m: Self) -> Self {
                 r_poch(self, m)
+            }
+
+            #[inline(always)]
+            fn gammainc(self, s: Self) -> Self {
+                r_gammainc(self, s)
             }
         }
     )*)
