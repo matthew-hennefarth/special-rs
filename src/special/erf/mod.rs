@@ -10,7 +10,9 @@ mod erf_trait;
 pub use erf_trait::*;
 
 mod r_erf;
+mod r_erf_inv;
 
 mod real_erf_impl {
     pub(crate) use super::r_erf::*;
+    pub(crate) use super::r_erf_inv::*;
 }

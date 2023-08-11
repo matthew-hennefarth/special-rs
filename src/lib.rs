@@ -25,6 +25,7 @@
 //! - Combinations and Permutations
 //! - Bernoulli, Tangent, and Secant numbers
 //! - Gamma Function (real and complex)
+//! - Error Function (real)
 //!
 //! [SciPy]: https://scipy.org/
 

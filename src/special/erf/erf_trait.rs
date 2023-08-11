@@ -58,6 +58,20 @@ pub trait Erf {
     /// [DLMF]: https://dlmf.nist.gov/7.2
     /// [Error function]: crate::special::erf::Erf::erf
     fn erfc(self) -> Self;
+
+    /// Inverse of the Error Function.
+    /// $$
+    /// \mathrm{erf}y = z
+    /// $$
+    /// Returns the value $y$ such that $\mathrm{erf}y = z$. The valid domain is $-1 \leq z \leq 1$.
+    /// # Examples
+    /// For real-valued inputs
+    /// ```
+    /// todo!();
+    /// ```
+    fn erf_inv(self) -> Self;
+
+    fn erfc_inv(self) -> Self;
 }
 
 macro_rules! float_erf_impl {
@@ -71,6 +85,16 @@ macro_rules! float_erf_impl {
             #[inline(always)]
             fn erfc(self) -> Self {
                 r_erf(self, true)
+            }
+
+            #[inline(always)]
+            fn erf_inv(self) -> Self {
+                r_erf_inv(self)
+            }
+
+            #[inline(always)]
+            fn erfc_inv(self) -> Self {
+                r_erfc_inv(self)
             }
         }
     )*)
