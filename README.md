@@ -8,6 +8,7 @@ It is currently in its infancy. Working on special function implementations. Cur
 - Combinations and Permutations
 - Bernoulli, Tangent, and Secant numbers
 - Gamma Function (real and complex)
+- Error Function (real)
 
 ## License
 
