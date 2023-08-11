@@ -3,7 +3,7 @@
 // Copyright 2023 Matthew R. Hennefarth                                *
 //**********************************************************************
 
-use crate::special::{eval_cheby, eval_poly};
+use crate::special::eval_poly;
 use crate::traits::FloatSciConst;
 
 use num_complex::ComplexFloat;
@@ -134,76 +134,6 @@ mod tests {
     use super::*;
 
     const PRECISION: f64 = 1E-14;
-
-    #[test]
-    fn test_eval_poly() {
-        assert_eq!(eval_poly(1.0, &[1.0, 1.0]), 2.0);
-        assert_eq!(eval_poly(0.0, &[1.0, 1.0]), 1.0);
-        assert_eq!(eval_poly(2.0, &[1.0, 1.0]), 3.0);
-
-        for i in 0..10 {
-            let i = i as f64;
-            for j in 0..10 {
-                let j = j as f64;
-                assert_eq!(eval_poly(i, &[j]), j);
-                assert_eq!(eval_poly(i, &[0.0, j]), j);
-                assert_eq!(eval_poly(i, &[0.0, 0.0, j]), j);
-            }
-        }
-        assert_almost_eq!(
-            eval_poly(72.2, &[-6.42, 5.111219, 0.12]),
-            -33097.2827882,
-            PRECISION
-        );
-
-        assert_almost_eq!(
-            eval_poly(-6.124, &[0.615, -2.801, 0.837, -4.701, 7.357]),
-            1575.84328434321037,
-            PRECISION
-        );
-    }
-
-    #[test]
-    fn test_eval_cheby() {
-        for i in 0..5 {
-            let i = i as f32;
-            assert_eq!(eval_cheby(i, &[1.0, 1.0]), i + 1.0);
-            assert_eq!(eval_cheby(i, &[2.0, 1.0]), 2.0 * i + 1.0);
-            assert_eq!(eval_cheby(i, &[2.0, 3.0]), 2.0 * i + 3.0);
-        }
-        for i in 0..10 {
-            let i = i as f64;
-            for j in 0..10 {
-                let j = j as f64;
-                assert_eq!(eval_cheby(i, &[j]), j);
-                assert_eq!(eval_cheby(i, &[0.0, j]), j);
-                assert_eq!(eval_cheby(i, &[0.0, 0.0, j]), j);
-                assert_eq!(eval_cheby(i, &[1.0, 0.0, j]), 2.0 * i * i - 1.0 + j);
-                assert_eq!(
-                    eval_cheby(i, &[1.0, 0.0, 0.0, j]),
-                    4.0 * i * i * i - 3.0 * i + j
-                );
-            }
-        }
-
-        assert_almost_eq!(
-            eval_cheby(0.25, &[-6.42, 5.111219, 0.12, 0.0]),
-            -0.0285666250000001,
-            PRECISION
-        );
-
-        assert_almost_eq!(
-            eval_cheby(0.25, &[-6.42, 5.111219, 0.12, 0.5]),
-            0.4714333749999999,
-            PRECISION
-        );
-
-        assert_almost_eq!(
-            eval_cheby(-0.325, &[-6.42, 48.2, -0.2212, 1.1, -0.2]),
-            38.4254039375000019,
-            PRECISION
-        );
-    }
 
     #[test]
     fn test_stirlings_series() {
