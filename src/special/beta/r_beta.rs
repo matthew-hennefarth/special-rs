@@ -93,28 +93,29 @@ mod tests {
             }
         }
 
-        // check asymptote (From SciPy v 1.10.1)
-        assert_almost_eq!(r_beta(1.1E6, 0.5), 0.0016899686300445731797, PRECISION);
-        assert_eq!(r_beta(0.5, 1.1E6), r_beta(1.1E6, 0.5));
-        assert_almost_eq!(r_beta(1.1e6, 0.7), 0.0000766158047285244695, PRECISION);
-        assert_almost_eq!(r_beta(122000.64, 1.1), 0.0000024173646023778890, PRECISION);
-        assert_almost_eq!(
-            r_beta(294882.12388, -1.12),
-            10793397.2536159846931695938110,
-            PRECISION
-        );
+        const ABSOLUTE_KNOWN_VALUES: [[f64; 3]; 4] = [
+            [-1.0, 1.0, -1.0],
+            [-2.0, 1.0, -0.5],
+            [1.0, -2.0, -0.5],
+            [-1.0, 3.0, f64::INFINITY],
+        ];
 
-        // Check Max Gamma?
-        assert_almost_eq!(
-            r_beta(165.4, 7.1),
-            0.0000000000001352937563602587676443787892,
-            PRECISION
-        );
+        const KNOWN_VALUES: [[f64; 3]; 5] = [
+            [1.1e6, 0.5, 0.0016899686300445731797], // check asymptote (From SciPy v 1.10.1)
+            [1.1e6, 0.7, 0.0000766158047285244695],
+            [122000.64, 1.1, 0.0000024173646023778890],
+            [294882.12388, -1.12, 10793397.2536159846931695938110],
+            [165.4, 7.1, 0.0000000000001352937563602587676443787892], // Check Max Gamma?
+        ];
 
-        // Check for negative integers
-        assert_eq!(r_beta(-1.0, 1.0), -1.0);
-        assert_eq!(r_beta(-2.0, 1.0), -0.5);
-        assert_eq!(r_beta(1.0, -2.0), -0.5);
-        assert_eq!(r_beta(-1.0, 3.0), f64::INFINITY);
+        for values in ABSOLUTE_KNOWN_VALUES {
+            assert_eq!(r_beta(values[0], values[1]), values[2]);
+            assert_eq!(r_beta(values[1], values[0]), values[2]);
+        }
+
+        for values in KNOWN_VALUES {
+            assert_almost_eq!(r_beta(values[0], values[1]), values[2], PRECISION);
+            assert_eq!(r_beta(values[0], values[1]), r_beta(values[1], values[0]));
+        }
     }
 }

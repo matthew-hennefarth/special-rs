@@ -272,6 +272,7 @@ where
 }
 
 #[cfg(test)]
+#[rustfmt::skip]
 mod tests{
     use super::*;
     
@@ -279,7 +280,7 @@ mod tests{
 
     #[test]
     fn test_r_erf_inv() {
-
+        assert_almost_eq!(r_erf_inv(0.5), 0.4769362762044698733814, PRECISION); // OEIS: A069286
     }
 
     #[test]

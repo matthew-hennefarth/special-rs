@@ -78,26 +78,26 @@ mod tests {
                 );
             }
 
-            // check asymptote (From SciPy v 1.10.1)
-            assert_almost_eq!(r_lbeta(1.1E6, 0.5), -6.3830453123232357981465, PRECISION);
-            assert_almost_eq!(r_lbeta(0.5, 1.1E6), -6.3830453123232357981465, PRECISION);
-            assert_almost_eq!(r_lbeta(1.1e6, 0.7), -9.4767071744518105447241, PRECISION);
-            assert_almost_eq!(
-                r_lbeta(122000.64, 1.1),
-                -12.9328326184768229722977,
-                PRECISION
-            );
-            assert_almost_eq!(
-                r_lbeta(142346.1124, 11551.51221),
-                -41022.7405061810277402400970,
-                PRECISION
-            );
+            const ABSOLUTE_KNOWN_VALUES: [[f64; 3]; 2] =
+                [[-1.0, 1.0, 0.0], [-1.0, 3.0, f64::INFINITY]];
 
-            // Check for negative integers
-            assert_eq!(r_lbeta(-1.0, 1.0), 0.0);
-            assert_almost_eq!(r_lbeta(-2.0, 1.0), -0.6931471805599452862268, PRECISION);
-            assert_almost_eq!(r_lbeta(1.0, -2.0), -0.6931471805599452862268, PRECISION);
-            assert_eq!(r_lbeta(-1.0, 3.0), f64::INFINITY);
+            const KNOWN_VALUES: [[f64; 3]; 5] = [
+                [1.1e6, 0.5, -6.3830453123232357981465], // check asymptote (From SciPy v 1.10.1)
+                [1.1e6, 0.7, -9.4767071744518105447241],
+                [122000.64, 1.1, -12.9328326184768229722977],
+                [142346.1124, 11551.51221, -41022.7405061810277402400970],
+                [-2.0, 1.0, -std::f64::consts::LN_2],
+            ];
+
+            for values in KNOWN_VALUES {
+                assert_almost_eq!(r_lbeta(values[0], values[1]), values[2], PRECISION);
+                assert_eq!(r_lbeta(values[0], values[1]), r_lbeta(values[1], values[0]));
+            }
+
+            for values in ABSOLUTE_KNOWN_VALUES {
+                assert_eq!(r_lbeta(values[0], values[1]), values[2]);
+                assert_eq!(r_lbeta(values[1], values[0]), values[2]);
+            }
         }
     }
 }
