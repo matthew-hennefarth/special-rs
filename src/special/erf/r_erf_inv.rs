@@ -60,3 +60,20 @@ where
         r_erf_impl(T::one() - x, x)
     }
 }
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    
+    const PRECISION: f64 = 1e-14;
+
+    #[test]
+    fn test_r_erf_inv() {
+
+    }
+
+    #[test]
+    fn test_r_erfc_inv() {
+
+    }
+}

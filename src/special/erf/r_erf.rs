@@ -243,7 +243,7 @@ mod tests {
     }
 
     #[test]
-    fn test_erfc() {
+    fn test_r_erfc() {
         assert!(r_erf(f64::NAN, true).is_nan());
         assert_almost_eq!(
             r_erf(-1.0, true),
