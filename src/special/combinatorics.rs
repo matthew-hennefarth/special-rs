@@ -269,14 +269,14 @@ mod tests {
         assert_eq!(3_u8.checked_choose(3), Some(3_u8.choose(3)));
         assert_eq!(10_u8.checked_choose(5), None);
 
-        let ref_values_5 = [1, 5, 10, 10, 5, 1, 0];
-        let ref_values_10 = [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1, 0];
-        let ref_values_15 = [
+        const REF_VALUES_5: [i32; 7] = [1, 5, 10, 10, 5, 1, 0];
+        const REF_VALUES_10: [i32; 12] = [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1, 0];
+        const REF_VALUES_15: [i32; 16] = [
             1, 15, 105, 455, 1365, 3003, 5005, 6435, 6435, 5005, 3003, 1365, 455, 105, 15, 1,
         ];
-        check_values(5, &ref_values_5, i32::choose, i32::checked_choose);
-        check_values(10, &ref_values_10, i32::choose, i32::checked_choose);
-        check_values(15, &ref_values_15, i32::choose, i32::checked_choose);
+        check_values(5, &REF_VALUES_5, i32::choose, i32::checked_choose);
+        check_values(10, &REF_VALUES_10, i32::choose, i32::checked_choose);
+        check_values(15, &REF_VALUES_15, i32::choose, i32::checked_choose);
     }
 
     #[test]

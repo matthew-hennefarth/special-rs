@@ -111,38 +111,40 @@ mod tests {
             }
         }
 
-        // Weird edge values
-        assert_eq!(r_poch(0.0, 0.0), 1.0);
-        assert_eq!(r_poch(0.0, 0.25), 0.0);
-        assert_eq!(r_poch(-1.0, 0.0), 1.0);
-        assert_eq!(r_poch(-1.0, 0.25), 0.0);
-        // This feels wrong since this is gamma(-1)/gamma(-2) which should be undefined. But technically you can use the rules of the gamma function to write as -2 gamma(-2)/gamma(-2). So I am not sure how I feel about it. But it agrees with SciPy currently.
-        assert_eq!(r_poch(-2.0, 1.0), -2.0);
-        assert!(r_poch(-2.2, 0.2).is_nan());
+        const ABSOLUTE_KNOWN_VALUES: [[f64; 3]; 5] = [
+            // Weird edge values
+            [0.0, 0.0, 1.0],
+            [0.0, 0.25, 0.0],
+            [-1.0, 0.0, 1.0],
+            [-1.0, 0.25, 0.0],
+            // This feels wrong since this is gamma(-1)/gamma(-2) which should be undefined. But technically you can use the rules of the gamma function to write as -2 gamma(-2)/gamma(-2). So I am not sure how I feel about it. But it agrees with SciPy currently.
+            [-2.0, 1.0, -2.0],
+        ];
 
-        // Following values taken from SciPy version 1.10.1
-        assert_almost_eq!(r_poch(0.5, 0.5), 0.56418958354775639030, PRECISION);
-        assert_almost_eq!(r_poch(0.5, 1.0), 0.5, PRECISION);
-        assert_almost_eq!(r_poch(1.0, 0.5), 0.88622692545275794096, PRECISION);
-        assert_almost_eq!(r_poch(1.5, 1.0), 1.5, PRECISION);
-        assert_almost_eq!(r_poch(1.0, 1.5), 1.32934038817913702246, PRECISION);
-        assert_almost_eq!(r_poch(1.5, 1.5), 2.25675833419102511712, PRECISION);
-        assert_almost_eq!(r_poch(2.5, 2.5), 18.05406667352819738426, PRECISION);
-        assert_almost_eq!(
-            r_poch(150.00001, PI),
-            7015772.59900571219623088837,
-            PRECISION
-        );
+        const KNOWN_VALUES: [[f64; 3]; 12] = [
+            [-2.2, 0.2, f64::NAN],
+            // Following values taken from SciPy version 1.10.1
+            [0.5, 0.5, 0.56418958354775639030],
+            [0.5, 1.0, 0.5],
+            [1.0, 0.5, 0.88622692545275794096],
+            [1.5, 1.0, 1.5],
+            [1.0, 1.5, 1.32934038817913702246],
+            [1.5, 1.5, 2.25675833419102511712],
+            [2.5, 2.5, 18.05406667352819738426],
+            [150.00001, PI, 7015772.59900571219623088837],
+            // Add some larger values to compare to!
+            // From Wolframalpha
+            [PI / 2.0, PI, 17.63940522158362397144],
+            [-34.54, -2.4, 0.000959271152790991576995792318463],
+            [-1.5, -0.22, 1.099148632503722270901806],
+        ];
 
-        // Add some larger values to compare to!
-        // From Wolframalpha
-        assert_almost_eq!(r_poch(PI / 2.0, PI), 17.63940522158362397144, PRECISION);
-        assert_almost_eq!(
-            r_poch(-34.54, -2.4),
-            0.000959271152790991576995792318463,
-            PRECISION
-        );
+        for value in ABSOLUTE_KNOWN_VALUES {
+            assert_eq!(r_poch(value[0], value[1]), value[2]);
+        }
 
-        assert_almost_eq!(r_poch(-1.5, -0.22), 1.099148632503722270901806, PRECISION);
+        for value in KNOWN_VALUES {
+            assert_almost_eq!(r_poch(value[0], value[1]), value[2], PRECISION);
+        }
     }
 }

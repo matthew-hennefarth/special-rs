@@ -416,130 +416,134 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num_traits::{NumCast, ToPrimitive};
+    use std::fmt::Debug;
+
+    const ABSOLUTE_KNOWN_FACTORIAL_VALUES: [u128; 35] = [
+        1,
+        1,
+        2,
+        6,
+        24,
+        120,
+        720,
+        5040,
+        40320,
+        362880,
+        3628800,
+        39916800,
+        479001600,
+        6227020800,
+        87178291200,
+        1307674368000,
+        20922789888000,
+        355687428096000,
+        6402373705728000,
+        121645100408832000,
+        2432902008176640000,
+        51090942171709440000,
+        1124000727777607680000,
+        25852016738884976640000,
+        620448401733239439360000,
+        15511210043330985984000000,
+        403291461126605635584000000,
+        10888869450418352160768000000,
+        304888344611713860501504000000,
+        8841761993739701954543616000000,
+        265252859812191058636308480000000,
+        8222838654177922817725562880000000,
+        263130836933693530167218012160000000,
+        8683317618811886495518194401280000000,
+        295232799039604140847618609643520000000,
+    ];
+
+    fn check_factorial<T>(range: &[T])
+    where
+        T: Factorial + CheckedFactorial + PartialEq + Debug + Copy + FromPrimitive + ToPrimitive,
+    {
+        for index in range {
+            let ref_value = T::from_u128(
+                ABSOLUTE_KNOWN_FACTORIAL_VALUES[<usize as NumCast>::from(*index).unwrap()],
+            )
+            .unwrap();
+            assert_eq!(index.factorial(), ref_value);
+            assert_eq!(index.checked_factorial(), Some(ref_value));
+        }
+    }
 
     #[test]
     fn factorial_u8() {
-        assert_eq!(0_u8.factorial(), 1);
-        for i in 1_u8..3 {
-            assert_eq!(i.factorial(), i);
-            assert_eq!(i.checked_factorial(), Some(i.factorial()));
-        }
-        assert_eq!(4_u8.factorial(), 24);
-        assert_eq!(5_u8.factorial(), 120);
+        check_factorial(&(0..6).collect::<Vec<u8>>());
         assert_eq!(6_u8.checked_factorial(), None);
-        assert_eq!(7_u8.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_u16() {
-        assert_eq!(6_u16.factorial(), 720);
-        assert_eq!(7_u16.factorial(), 5040);
-        assert_eq!(8_u16.factorial(), 40320);
+        check_factorial(&(6..9).collect::<Vec<u16>>());
         assert_eq!(9_u16.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_u32() {
-        assert_eq!(9_u32.factorial(), 362880);
-        assert_eq!(10_u32.factorial(), 3628800);
-        assert_eq!(11_u32.factorial(), 39916800);
-        assert_eq!(12_u32.factorial(), 479001600);
+        check_factorial(&(9..13).collect::<Vec<u32>>());
         assert_eq!(13_u32.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_u64() {
-        assert_eq!(13_u64.factorial(), 6227020800);
-        assert_eq!(14_u64.factorial(), 87178291200);
-        assert_eq!(15_u64.factorial(), 1307674368000);
-        assert_eq!(16_u64.factorial(), 20922789888000);
-        assert_eq!(17_u64.factorial(), 355687428096000);
-        assert_eq!(18_u64.factorial(), 6402373705728000);
-        assert_eq!(19_u64.factorial(), 121645100408832000);
-        assert_eq!(20_u64.factorial(), 2432902008176640000);
+        check_factorial(&(13..21).collect::<Vec<u64>>());
         assert_eq!(21_u64.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_u128() {
-        assert_eq!(21_u128.factorial(), 51090942171709440000);
-        assert_eq!(22_u128.factorial(), 1124000727777607680000);
-        assert_eq!(23_u128.factorial(), 25852016738884976640000);
-        assert_eq!(24_u128.factorial(), 620448401733239439360000);
-        assert_eq!(25_u128.factorial(), 15511210043330985984000000);
-        assert_eq!(26_u128.factorial(), 403291461126605635584000000);
-        assert_eq!(27_u128.factorial(), 10888869450418352160768000000);
-        assert_eq!(28_u128.factorial(), 304888344611713860501504000000);
-        assert_eq!(29_u128.factorial(), 8841761993739701954543616000000);
-        assert_eq!(30_u128.factorial(), 265252859812191058636308480000000);
-        assert_eq!(31_u128.factorial(), 8222838654177922817725562880000000);
-        assert_eq!(32_u128.factorial(), 263130836933693530167218012160000000);
-        assert_eq!(33_u128.factorial(), 8683317618811886495518194401280000000);
-        assert_eq!(34_u128.factorial(), 295232799039604140847618609643520000000);
+        check_factorial(&(21..35).collect::<Vec<u128>>());
         assert_eq!(35_u128.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_i8() {
-        assert_eq!(0_i8.factorial(), 1);
-        assert_eq!(1_i8.factorial(), 1);
-        assert_eq!(2_i8.factorial(), 2);
-        assert_eq!(3_i8.factorial(), 6);
-        assert_eq!(4_i8.factorial(), 24);
-        assert_eq!(5_i8.factorial(), 120);
+        check_factorial(&(0..6).collect::<Vec<i8>>());
         assert_eq!(6_i8.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_i16() {
-        assert_eq!(6_i16.factorial(), 720);
-        assert_eq!(7_i16.factorial(), 5040);
+        check_factorial(&(6..8).collect::<Vec<i16>>());
         assert_eq!(8_i16.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_i32() {
-        assert_eq!(8_i32.factorial(), 40320);
-        assert_eq!(9_i32.factorial(), 362880);
-        assert_eq!(10_i32.factorial(), 3628800);
-        assert_eq!(11_i32.factorial(), 39916800);
-        assert_eq!(12_i32.factorial(), 479001600);
+        check_factorial(&(8..13).collect::<Vec<i32>>());
         assert_eq!(13_i32.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_i64() {
-        assert_eq!(13_i64.factorial(), 6227020800);
-        assert_eq!(14_i64.factorial(), 87178291200);
-        assert_eq!(15_i64.factorial(), 1307674368000);
-        assert_eq!(16_i64.factorial(), 20922789888000);
-        assert_eq!(17_i64.factorial(), 355687428096000);
-        assert_eq!(18_i64.factorial(), 6402373705728000);
-        assert_eq!(19_i64.factorial(), 121645100408832000);
-        assert_eq!(20_i64.factorial(), 2432902008176640000);
+        check_factorial(&(13..21).collect::<Vec<i64>>());
         assert_eq!(21_i64.checked_factorial(), None);
     }
 
     #[test]
     fn factorial_i128() {
-        assert_eq!(21_i128.factorial(), 51090942171709440000);
-        assert_eq!(22_i128.factorial(), 1124000727777607680000);
-        assert_eq!(23_i128.factorial(), 25852016738884976640000);
-        assert_eq!(24_i128.factorial(), 620448401733239439360000);
-        assert_eq!(25_i128.factorial(), 15511210043330985984000000);
-        assert_eq!(26_i128.factorial(), 403291461126605635584000000);
-        assert_eq!(27_i128.factorial(), 10888869450418352160768000000);
-        assert_eq!(28_i128.factorial(), 304888344611713860501504000000);
-        assert_eq!(29_i128.factorial(), 8841761993739701954543616000000);
-        assert_eq!(30_i128.factorial(), 265252859812191058636308480000000);
-        assert_eq!(31_i128.factorial(), 8222838654177922817725562880000000);
-        assert_eq!(32_i128.factorial(), 263130836933693530167218012160000000);
-        assert_eq!(33_i128.factorial(), 8683317618811886495518194401280000000);
+        check_factorial(&(21..34).collect::<Vec<i128>>());
         assert_eq!(34_i128.checked_factorial(), None);
     }
 
+    // TODO Update tests so they are like the above.
     #[test]
     fn factorial2_u8() {
+        const ABSOLUTE_KNOWN_VALUES: [[u8; 2]; 8] = [
+            [0, 1],
+            [1, 1],
+            [2, 2],
+            [3, 3],
+            [4, 8],
+            [5, 15],
+            [6, 48],
+            [7, 105],
+        ];
         assert_eq!(0_u8.factorial2(), 1);
         assert_eq!(1_u8.factorial2(), 1);
         assert_eq!(2_u8.factorial2(), 2);

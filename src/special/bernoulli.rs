@@ -107,30 +107,19 @@ mod tests {
 
     #[test]
     fn test_bernoulli_zag() {
-        assert_eq!(bernoulli_b2n_zag::<_, f64>(0), vec![1.0_f64]);
-        assert_eq!(bernoulli_b2n_zag::<_, f64>(1), vec![1.0_f64, 1.0 / 6.0]);
-        assert_eq!(
-            bernoulli_b2n_zag::<usize, f64>(2),
-            vec![1.0_f64, 1.0 / 6.0, -1.0 / 30.0]
-        );
-        assert_eq!(
-            bernoulli_b2n_zag::<usize, f64>(3),
-            vec![1.0_f64, 1.0 / 6.0, -1.0 / 30.0, 1.0 / 42.0]
-        );
-        assert_eq!(
-            bernoulli_b2n_zag::<usize, f64>(4),
-            vec![1.0_f64, 1.0 / 6.0, -1.0 / 30.0, 1.0 / 42.0, -1.0 / 30.0]
-        );
-        assert_eq!(
-            bernoulli_b2n_zag::<usize, f64>(5),
-            vec![
-                1.0_f64,
-                1.0 / 6.0,
-                -1.0 / 30.0,
-                1.0 / 42.0,
-                -1.0 / 30.0,
-                5.0 / 66.0
-            ]
-        );
+        const ABSOLUTE_KNOWN_VALUES: [f64; 6] = [
+            1.0,
+            1.0 / 6.0,
+            -1.0 / 30.0,
+            1.0 / 42.0,
+            -1.0 / 30.0,
+            5.0 / 66.0,
+        ];
+        for i in 0..ABSOLUTE_KNOWN_VALUES.len() {
+            assert_eq!(
+                bernoulli_b2n_zag::<_, f64>(i),
+                ABSOLUTE_KNOWN_VALUES[..i + 1]
+            );
+        }
     }
 }

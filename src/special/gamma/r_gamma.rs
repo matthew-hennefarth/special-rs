@@ -152,77 +152,45 @@ mod tests {
         assert!(r_gamma(0.0_f32).is_nan());
         assert!(r_gamma(f64::NAN).is_nan());
 
-        // Test the half-integers
-        assert_almost_eq!(r_gamma(-2.5), -8.0 / 15.0 * SQRT_PI, PRECISION); // OEIS: A019707
-        assert_almost_eq!(r_gamma(-1.5), (4.0 / 3.0) * SQRT_PI, PRECISION); // OEIS: A245886
-        assert_almost_eq!(r_gamma(-0.5), -2.0 * SQRT_PI, PRECISION); // OEIS: A245887
-        assert_almost_eq!(r_gamma(0.5), SQRT_PI, PRECISION); // OEIS: A002161
-        assert_almost_eq!(r_gamma(1.5), SQRT_PI / 2.0, PRECISION); // OEIS: A019704
-        assert_almost_eq!(r_gamma(2.5), 0.75 * SQRT_PI, PRECISION); // OEIS: A245884
-        assert_almost_eq!(r_gamma(3.5), 15.0 / 8.0 * SQRT_PI, PRECISION); // OEIS: A245885
-        assert_almost_eq!(r_gamma(4.5), 105.0 / 16.0 * SQRT_PI, PRECISION);
-        assert_almost_eq!(r_gamma(5.5), 945.0 / 32.0 * SQRT_PI, PRECISION);
+        const KNOWN_VALUES: [[f64; 2]; 28] = [
+            // Test the half-integers
+            [-2.5, -8.0 / 15.0 * SQRT_PI], // OEIS: A019707
+            [-1.5, (4.0 / 3.0) * SQRT_PI], // OEIS: A245886
+            [-0.5, -2.0 * SQRT_PI],        // OEIS: A245887
+            [0.5, SQRT_PI],                // OEIS: A002161
+            [1.5, SQRT_PI / 2.0],          // OEIS: A019704
+            [2.5, 0.75 * SQRT_PI],         // OEIS: A245884
+            [3.5, 15.0 / 8.0 * SQRT_PI],   // OEIS: A245885
+            [4.5, 105.0 / 16.0 * SQRT_PI],
+            [5.5, 945.0 / 32.0 * SQRT_PI],
+            // Rational Values
+            [1.0 / 3.0, 2.6789385347077476337], // OEIS: A073005
+            [1.0 / 4.0, 3.6256099082219083119], // OEIS: A068466
+            [1.0 / 5.0, 4.5908437119988030532], // OEIS: A175380
+            [1.0 / 6.0, 5.5663160017802352043], // OEIS: A175379
+            [1.0 / 7.0, 6.5480629402478244377], // OEIS: A220086
+            [1.0 / 8.0, 7.5339415987976119047], // OEIS: A203142
+            // Other Important Values
+            [PI, 2.2880377953400324179], // OEIS: A269545
+            [
+                1.000001e-35,
+                9.9999900000099999900000099999899999522784235098567139293e+34,
+            ],
+            [1.000001e-10, 9.99998999943278432519738283781e+9],
+            [1.000001e-5, 99999.32279432557746387],
+            [1.000001e-2, 99.43248512896257405886],
+            [1.62123, 0.896081923385351],
+            [-4.8, -0.062423361354759553],
+            [0.1, 9.51350769866873183629],
+            [1.0 - 1.0e-14, 1.00000000000000577215],
+            [1.0 + 1.0e-14, 0.99999999999999422784],
+            [PI / 2.0, 0.89056089038153932801],
+            [5.0 - 1.0e-14, 23.999999999999652],
+            [10.1, 454760.7514415855],
+        ];
 
-        // Rational Values
-        assert_almost_eq!(r_gamma(1.0 / 3.0), 2.6789385347077476337, PRECISION); // OEIS: A073005
-        assert_almost_eq!(r_gamma(0.25), 3.6256099082219083119, PRECISION); // OEIS: A068466
-        assert_almost_eq!(r_gamma(0.2), 4.5908437119988030532, PRECISION); // OEIS: A175380
-        assert_almost_eq!(r_gamma(1.0 / 6.0), 5.5663160017802352043, PRECISION); // OEIS: A175379
-        assert_almost_eq!(r_gamma(1.0 / 7.0), 6.5480629402478244377, PRECISION); // OEIS: A220086
-        assert_almost_eq!(r_gamma(1.0 / 8.0), 7.5339415987976119047, PRECISION); // OEIS: A203142
-
-        // Other Important Values
-        assert_almost_eq!(r_gamma(PI), 2.2880377953400324179, PRECISION); // OEIS: A269545
-
-        assert_almost_eq!(
-            r_gamma(1.000001e-35),
-            9.9999900000099999900000099999899999522784235098567139293e+34,
-            PRECISION
-        );
-        assert_almost_eq!(
-            r_gamma(1.000001e-10),
-            9.99998999943278432519738283781280989934496494539074049002e+9,
-            PRECISION
-        );
-        assert_almost_eq!(r_gamma(1.000001e-5), 99999.32279432557746387, PRECISION);
-        assert_almost_eq!(r_gamma(1.000001e-2), 99.43248512896257405886, PRECISION);
-        assert_almost_eq!(r_gamma(1.62123), 0.896081923385351, PRECISION);
-
-        assert_almost_eq!(r_gamma(-4.8), -0.062423361354759553, PRECISION);
-
-        assert_almost_eq!(
-            r_gamma(1.0e-5 + 1.0e-16),
-            99999.42279322556767360213300482199406241771308740302819426480,
-            1e-9
-        );
-        assert_almost_eq!(
-            r_gamma(0.1),
-            9.513507698668731836292487177265402192550578626088377343050000,
-            1e-14
-        );
-        assert_almost_eq!(
-            r_gamma(1.0 - 1.0e-14),
-            1.000000000000005772156649015427511664653698987042926067639529,
-            PRECISION
-        );
-        assert_almost_eq!(
-            r_gamma(1.0 + 1.0e-14),
-            0.99999999999999422784335098477029953441189552403615306268023,
-            PRECISION
-        );
-        assert_almost_eq!(
-            r_gamma(PI / 2.0),
-            0.890560890381539328010659635359121005933541962884758999762766,
-            PRECISION
-        );
-
-        assert_almost_eq!(r_gamma(5.0 - 1.0e-14), 23.999999999999652, PRECISION);
-
-        assert_almost_eq!(r_gamma(10.1), 454760.7514415855, PRECISION);
-        assert_almost_eq!(
-            r_gamma(150.0 + 1.0e-12),
-            3.8089226376496421386707466577615064443807882167327097140e+260,
-            1e248
-        );
+        for value in KNOWN_VALUES {
+            assert_almost_eq!(r_gamma(value[0]), value[1], PRECISION);
+        }
     }
 }
