@@ -456,269 +456,210 @@ mod tests {
         8683317618811886495518194401280000000,
         295232799039604140847618609643520000000,
     ];
+    const ABSOLUTE_KNOWN_FACTORIAL2_VALUES: [u128; 57] = [
+        1,
+        1,
+        2,
+        3,
+        8,
+        15,
+        48,
+        105,
+        384,
+        945,
+        3840,
+        10395,
+        46080,
+        135135,
+        645120,
+        2027025,
+        10321920,
+        34459425,
+        185794560,
+        654729075,
+        3715891200,
+        13749310575,
+        81749606400,
+        316234143225,
+        1961990553600,
+        7905853580625,
+        51011754393600,
+        213458046676875,
+        1428329123020800,
+        6190283353629375,
+        42849873690624000,
+        191898783962510625,
+        1371195958099968000,
+        6332659870762850625,
+        46620662575398912000,
+        443286190953399543750,
+        2517515779071541248000,
+        21868785420367710825000,
+        119581999505898209280000,
+        1023459157673208866610000,
+        5580493310275249766400000,
+        47956371959544644035440000,
+        263678308910505551462400000,
+        2291248882511577437248800000,
+        12762030151268468690780160000,
+        112479490596022892374032000000,
+        635974502538212023090544640000,
+        5693192677860235629393312000000,
+        32707260130536618330370867200000,
+        297564203962828315562957107200000,
+        1737573194434757848800952320000000,
+        16068467013992729040399683788800000,
+        95373462005641153034185605120000000,
+        896451317622752251727561306112000000,
+        5407675295719853377038323810304000000,
+        51652671158263344028111865733120000000,
+        316594808222144143164789139439616000000,
+    ];
 
-    fn check_factorial<T>(range: &[T])
+    fn check_factorial<T>(max: T)
     where
         T: Factorial + CheckedFactorial + PartialEq + Debug + Copy + FromPrimitive + ToPrimitive,
     {
-        for index in range {
-            let ref_value = T::from_u128(
-                ABSOLUTE_KNOWN_FACTORIAL_VALUES[<usize as NumCast>::from(*index).unwrap()],
-            )
-            .unwrap();
+        for index in 0..<usize as NumCast>::from(max).unwrap() {
+            let ref_value = T::from_u128(ABSOLUTE_KNOWN_FACTORIAL_VALUES[index]).unwrap();
+            let index = T::from_usize(index).unwrap();
             assert_eq!(index.factorial(), ref_value);
             assert_eq!(index.checked_factorial(), Some(ref_value));
         }
+        assert_eq!(max.checked_factorial(), None)
+    }
+
+    fn check_factorial2<T>(max: T)
+    where
+        T: Factorial + CheckedFactorial + PartialEq + Debug + Copy + FromPrimitive + ToPrimitive,
+    {
+        for index in 0..<usize as NumCast>::from(max).unwrap() {
+            let ref_value = T::from_u128(ABSOLUTE_KNOWN_FACTORIAL2_VALUES[index]).unwrap();
+            let index = T::from_usize(index).unwrap();
+            assert_eq!(index.factorial2(), ref_value);
+            assert_eq!(index.checked_factorial2(), Some(ref_value));
+        }
+        assert_eq!(max.checked_factorial2(), None);
     }
 
     #[test]
     fn factorial_u8() {
-        check_factorial(&(0..6).collect::<Vec<u8>>());
-        assert_eq!(6_u8.checked_factorial(), None);
+        const MAX: u8 = 6;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_u16() {
-        check_factorial(&(6..9).collect::<Vec<u16>>());
-        assert_eq!(9_u16.checked_factorial(), None);
+        const MAX: u16 = 9;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_u32() {
-        check_factorial(&(9..13).collect::<Vec<u32>>());
-        assert_eq!(13_u32.checked_factorial(), None);
+        const MAX: u32 = 13;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_u64() {
-        check_factorial(&(13..21).collect::<Vec<u64>>());
-        assert_eq!(21_u64.checked_factorial(), None);
+        const MAX: u64 = 21;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_u128() {
-        check_factorial(&(21..35).collect::<Vec<u128>>());
-        assert_eq!(35_u128.checked_factorial(), None);
+        const MAX: u128 = 35;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_i8() {
-        check_factorial(&(0..6).collect::<Vec<i8>>());
-        assert_eq!(6_i8.checked_factorial(), None);
+        const MAX: i8 = 6;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_i16() {
-        check_factorial(&(6..8).collect::<Vec<i16>>());
-        assert_eq!(8_i16.checked_factorial(), None);
+        const MAX: i16 = 8;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_i32() {
-        check_factorial(&(8..13).collect::<Vec<i32>>());
-        assert_eq!(13_i32.checked_factorial(), None);
+        const MAX: i32 = 13;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_i64() {
-        check_factorial(&(13..21).collect::<Vec<i64>>());
-        assert_eq!(21_i64.checked_factorial(), None);
+        const MAX: i64 = 21;
+        check_factorial(MAX);
     }
 
     #[test]
     fn factorial_i128() {
-        check_factorial(&(21..34).collect::<Vec<i128>>());
-        assert_eq!(34_i128.checked_factorial(), None);
+        const MAX: i128 = 34;
+        check_factorial(MAX);
     }
 
-    // TODO Update tests so they are like the above.
     #[test]
     fn factorial2_u8() {
-        const ABSOLUTE_KNOWN_VALUES: [[u8; 2]; 8] = [
-            [0, 1],
-            [1, 1],
-            [2, 2],
-            [3, 3],
-            [4, 8],
-            [5, 15],
-            [6, 48],
-            [7, 105],
-        ];
-        assert_eq!(0_u8.factorial2(), 1);
-        assert_eq!(1_u8.factorial2(), 1);
-        assert_eq!(2_u8.factorial2(), 2);
-        assert_eq!(3_u8.factorial2(), 3);
-        assert_eq!(4_u8.factorial2(), 8);
-        assert_eq!(5_u8.factorial2(), 15);
-        assert_eq!(6_u8.factorial2(), 48);
-        assert_eq!(7_u8.factorial2(), 105);
-        assert_eq!(8_u8.checked_factorial2(), None);
+        const MAX: u8 = 8;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_u16() {
-        assert_eq!(8_u16.factorial2(), 384);
-        assert_eq!(9_u16.factorial2(), 945);
-        assert_eq!(10_u16.factorial2(), 3840);
-        assert_eq!(11_u16.factorial2(), 10395);
-        assert_eq!(12_u16.factorial2(), 46080);
-        assert_eq!(13_u16.checked_factorial2(), None);
+        const MAX: u16 = 13;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_u32() {
-        assert_eq!(13_u32.factorial2(), 135135);
-        assert_eq!(14_u32.factorial2(), 645120);
-        assert_eq!(15_u32.factorial2(), 2027025);
-        assert_eq!(16_u32.factorial2(), 10321920);
-        assert_eq!(17_u32.factorial2(), 34459425);
-        assert_eq!(18_u32.factorial2(), 185794560);
-        assert_eq!(19_u32.factorial2(), 654729075);
-        assert_eq!(20_u32.factorial2(), 3715891200);
-        assert_eq!(21_u32.checked_factorial2(), None);
+        const MAX: u32 = 21;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_u64() {
-        assert_eq!(21_u64.factorial2(), 13749310575);
-        assert_eq!(22_u64.factorial2(), 81749606400);
-        assert_eq!(23_u64.factorial2(), 316234143225);
-        assert_eq!(24_u64.factorial2(), 1961990553600);
-        assert_eq!(25_u64.factorial2(), 7905853580625);
-        assert_eq!(26_u64.factorial2(), 51011754393600);
-        assert_eq!(27_u64.factorial2(), 213458046676875);
-        assert_eq!(28_u64.factorial2(), 1428329123020800);
-        assert_eq!(29_u64.factorial2(), 6190283353629375);
-        assert_eq!(30_u64.factorial2(), 42849873690624000);
-        assert_eq!(31_u64.factorial2(), 191898783962510625);
-        assert_eq!(32_u64.factorial2(), 1371195958099968000);
-        assert_eq!(33_u64.factorial2(), 6332659870762850625);
-        assert_eq!(34_u64.checked_factorial2(), None);
+        const MAX: u64 = 34;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_u128() {
-        assert_eq!(21_u128.factorial2(), 13749310575);
-        assert_eq!(22_u128.factorial2(), 81749606400);
-        assert_eq!(23_u128.factorial2(), 316234143225);
-        assert_eq!(24_u128.factorial2(), 1961990553600);
-        assert_eq!(25_u128.factorial2(), 7905853580625);
-        assert_eq!(26_u128.factorial2(), 51011754393600);
-        assert_eq!(27_u128.factorial2(), 213458046676875);
-        assert_eq!(28_u128.factorial2(), 1428329123020800);
-        assert_eq!(29_u128.factorial2(), 6190283353629375);
-        assert_eq!(30_u128.factorial2(), 42849873690624000);
-        assert_eq!(31_u128.factorial2(), 191898783962510625);
-        assert_eq!(32_u128.factorial2(), 1371195958099968000);
-        assert_eq!(33_u128.factorial2(), 6332659870762850625);
-        assert_eq!(34_u128.factorial2(), 46620662575398912000);
-        assert_eq!(35_u128.factorial2(), 443286190953399543750);
-        assert_eq!(36_u128.factorial2(), 2517515779071541248000);
-        assert_eq!(37_u128.factorial2(), 21868785420367710825000);
-        assert_eq!(38_u128.factorial2(), 119581999505898209280000);
-        assert_eq!(39_u128.factorial2(), 1023459157673208866610000);
-        assert_eq!(40_u128.factorial2(), 5580493310275249766400000);
-        assert_eq!(41_u128.factorial2(), 47956371959544644035440000);
-        assert_eq!(42_u128.factorial2(), 263678308910505551462400000);
-        assert_eq!(43_u128.factorial2(), 2291248882511577437248800000);
-        assert_eq!(44_u128.factorial2(), 12762030151268468690780160000);
-        assert_eq!(45_u128.factorial2(), 112479490596022892374032000000);
-        assert_eq!(46_u128.factorial2(), 635974502538212023090544640000);
-        assert_eq!(47_u128.factorial2(), 5693192677860235629393312000000);
-        assert_eq!(48_u128.factorial2(), 32707260130536618330370867200000);
-        assert_eq!(49_u128.factorial2(), 297564203962828315562957107200000);
-        assert_eq!(50_u128.factorial2(), 1737573194434757848800952320000000);
-        assert_eq!(51_u128.factorial2(), 16068467013992729040399683788800000);
-        assert_eq!(52_u128.factorial2(), 95373462005641153034185605120000000);
-        assert_eq!(53_u128.factorial2(), 896451317622752251727561306112000000);
-        assert_eq!(54_u128.factorial2(), 5407675295719853377038323810304000000);
-        assert_eq!(55_u128.factorial2(), 51652671158263344028111865733120000000);
-        assert_eq!(
-            56_u128.factorial2(),
-            316594808222144143164789139439616000000
-        );
-        assert_eq!(57_u128.checked_factorial2(), None);
+        const MAX: u128 = 57;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_i8() {
-        assert_eq!(0_i8.factorial2(), 1);
-        assert_eq!(1_i8.factorial2(), 1);
-        assert_eq!(2_i8.factorial2(), 2);
-        assert_eq!(3_i8.factorial2(), 3);
-        assert_eq!(4_i8.factorial2(), 8);
-        assert_eq!(5_i8.factorial2(), 15);
-        assert_eq!(6_i8.factorial2(), 48);
-        assert_eq!(7_i8.factorial2(), 105);
-        assert_eq!(8_i8.checked_factorial2(), None);
+        const MAX: i8 = 8;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_i16() {
-        assert_eq!(8_i16.factorial2(), 384);
-        assert_eq!(9_i16.factorial2(), 945);
-        assert_eq!(10_i16.factorial2(), 3840);
-        assert_eq!(11_i16.factorial2(), 10395);
-        assert_eq!(12_i16.checked_factorial2(), None);
+        const MAX: i16 = 12;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_i32() {
-        assert_eq!(12_i32.factorial2(), 46080);
-        assert_eq!(13_i32.factorial2(), 135135);
-        assert_eq!(14_i32.factorial2(), 645120);
-        assert_eq!(15_i32.factorial2(), 2027025);
-        assert_eq!(16_i32.factorial2(), 10321920);
-        assert_eq!(17_i32.factorial2(), 34459425);
-        assert_eq!(18_i32.factorial2(), 185794560);
-        assert_eq!(19_i32.factorial2(), 654729075);
-        assert_eq!(20_i32.checked_factorial2(), None);
+        const MAX: i32 = 20;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_i64() {
-        assert_eq!(20_i64.factorial2(), 3715891200);
-        assert_eq!(21_i64.factorial2(), 13749310575);
-        assert_eq!(22_i64.factorial2(), 81749606400);
-        assert_eq!(23_i64.factorial2(), 316234143225);
-        assert_eq!(24_i64.factorial2(), 1961990553600);
-        assert_eq!(25_i64.factorial2(), 7905853580625);
-        assert_eq!(26_i64.factorial2(), 51011754393600);
-        assert_eq!(27_i64.factorial2(), 213458046676875);
-        assert_eq!(28_i64.factorial2(), 1428329123020800);
-        assert_eq!(29_i64.factorial2(), 6190283353629375);
-        assert_eq!(30_i64.factorial2(), 42849873690624000);
-        assert_eq!(31_i64.factorial2(), 191898783962510625);
-        assert_eq!(32_i64.factorial2(), 1371195958099968000);
-        assert_eq!(33_i64.factorial2(), 6332659870762850625);
-        assert_eq!(34_i64.checked_factorial2(), None);
+        const MAX: i64 = 34;
+        check_factorial2(MAX);
     }
 
     #[test]
     fn factorial2_i128() {
-        assert_eq!(34_i128.factorial2(), 46620662575398912000);
-        assert_eq!(35_i128.factorial2(), 443286190953399543750);
-        assert_eq!(36_i128.factorial2(), 2517515779071541248000);
-        assert_eq!(37_i128.factorial2(), 21868785420367710825000);
-        assert_eq!(38_i128.factorial2(), 119581999505898209280000);
-        assert_eq!(39_i128.factorial2(), 1023459157673208866610000);
-        assert_eq!(40_i128.factorial2(), 5580493310275249766400000);
-        assert_eq!(41_i128.factorial2(), 47956371959544644035440000);
-        assert_eq!(42_i128.factorial2(), 263678308910505551462400000);
-        assert_eq!(43_i128.factorial2(), 2291248882511577437248800000);
-        assert_eq!(44_i128.factorial2(), 12762030151268468690780160000);
-        assert_eq!(45_i128.factorial2(), 112479490596022892374032000000);
-        assert_eq!(46_i128.factorial2(), 635974502538212023090544640000);
-        assert_eq!(47_i128.factorial2(), 5693192677860235629393312000000);
-        assert_eq!(48_i128.factorial2(), 32707260130536618330370867200000);
-        assert_eq!(49_i128.factorial2(), 297564203962828315562957107200000);
-        assert_eq!(50_i128.factorial2(), 1737573194434757848800952320000000);
-        assert_eq!(51_i128.factorial2(), 16068467013992729040399683788800000);
-        assert_eq!(52_i128.factorial2(), 95373462005641153034185605120000000);
-        assert_eq!(53_i128.factorial2(), 896451317622752251727561306112000000);
-        assert_eq!(54_i128.factorial2(), 5407675295719853377038323810304000000);
-        assert_eq!(55_i128.factorial2(), 51652671158263344028111865733120000000);
-        assert_eq!(56_i128.checked_factorial2(), None);
+        const MAX: i128 = 56;
+        check_factorial2(MAX);
     }
 
     #[test]
