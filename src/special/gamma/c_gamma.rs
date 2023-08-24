@@ -239,129 +239,108 @@ where
 mod tests {
     use super::*;
     use crate::special::gamma::real_gamma_impl::r_lgamma;
+    use num_complex::Complex64;
 
     const PRECISION: f64 = 1.0e-14;
 
     #[test]
     fn test_c_loggamma() {
-        // Values take from Wolframalpha
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 7.5, im: 0.0 }),
-            Complex {
-                re: 7.53436423675873295515836763243,
-                im: 0.0
-            },
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 7.5, im: 1.0 }),
-            Complex {
-                re: 7.46329489273832466759034022127,
-                im: 1.95012140717825057478945773428
-            },
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lngamma(0.9),
-            Complex {
-                re: r_lgamma(0.9),
-                im: 0.0
-            },
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 0.95, im: 0.05 }),
-            Complex {
-                re: 0.028753589066549549997223245584,
-                im: -0.03307300849770222888977061702
-            },
-            PRECISION
-        );
+        const COMPLEX_KNOWN_VALUES: [[Complex64; 2]; 10] = [
+            // Values take from Wolframalpha
+            [
+                Complex { re: 7.5, im: 0.0 },
+                Complex {
+                    re: 7.53436423675873295515836763243,
+                    im: 0.0,
+                },
+            ],
+            [
+                Complex { re: 7.5, im: 1.0 },
+                Complex {
+                    re: 7.46329489273832466759034022127,
+                    im: 1.95012140717825057478945773428,
+                },
+            ],
+            [
+                Complex { re: 0.95, im: 0.05 },
+                Complex {
+                    re: 0.028753589066549549997223245584,
+                    im: -0.03307300849770222888977061702,
+                },
+            ],
+            [
+                Complex { re: 0.0, im: 7.1 },
+                Complex {
+                    re: -11.2137627790627281143543,
+                    im: 6.0195299083889901581301,
+                },
+            ],
+            // From SciPy version 1.10.1
+            [
+                Complex { re: 0.0, im: -7.22 },
+                Complex {
+                    re: -11.4106384227068478054434,
+                    im: -6.2559451620947514882687,
+                },
+            ],
+            [
+                Complex { re: -7.33, im: 4.3 },
+                Complex {
+                    re: -19.7421179905029617884793,
+                    im: -15.5482125579457619579671,
+                },
+            ],
+            [
+                Complex { re: 1.5, im: 0.5 },
+                Complex {
+                    re: -0.2341863474703487213446,
+                    im: 0.0346689612753978693149,
+                },
+            ],
+            [
+                Complex { re: 1.5, im: -0.5 },
+                Complex {
+                    re: -0.2341863474703487213446,
+                    im: -0.0346689612753978693149,
+                },
+            ],
+            [
+                Complex {
+                    re: 140.233,
+                    im: -54.21,
+                },
+                Complex {
+                    re: 541.1630267673411935902550,
+                    im: -269.0855433781250667379936,
+                },
+            ],
+            [
+                Complex { re: 0.0, im: 1.0 },
+                Complex {
+                    re: -0.6509231993018549378149,
+                    im: -1.8724366472624294210902,
+                },
+            ],
+        ];
 
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 0.0, im: 7.1 }),
-            Complex {
-                re: -11.2137627790627281143543,
-                im: 6.0195299083889901581301
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 0.0, im: -7.22 }),
-            Complex {
-                re: -11.4106384227068478054434,
-                im: -6.2559451620947514882687
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(-7.2),
-            Complex {
-                re: -7.2548056050797278260234,
-                im: -25.1327412287183449279837
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex { re: -7.33, im: 4.3 }),
-            Complex {
-                re: -19.7421179905029617884793,
-                im: -15.5482125579457619579671
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 1.5, im: 0.5 }),
-            Complex {
-                re: -0.2341863474703487213446,
-                im: 0.0346689612753978693149
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 1.5, im: -0.5 }),
-            Complex {
-                re: -0.2341863474703487213446,
-                im: -0.0346689612753978693149
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex {
-                re: 140.233,
-                im: -54.21
-            }),
-            Complex {
-                re: 541.1630267673411935902550,
-                im: -269.0855433781250667379936
-            },
-            PRECISION
-        );
-        // From SciPy version 1.10.1
-        assert_almost_eq!(
-            c_lngamma(Complex { re: 0.0, im: 1.0 }),
-            Complex {
-                re: -0.6509231993018549378149,
-                im: -1.8724366472624294210902
-            },
-            PRECISION
-        );
+        const REAL_KNOWN_VALUES: [(f64, Complex64); 1] = [
+            // From SciPy version 1.10.1
+            (
+                -7.2,
+                Complex {
+                    re: -7.2548056050797278260234,
+                    im: -25.1327412287183449279837,
+                },
+            ),
+        ];
 
-        assert_almost_eq!(
-            c_lngamma(1.5),
-            Complex {
-                re: r_lgamma(1.5),
-                im: 0.0
-            },
-            PRECISION
-        );
+        for values in COMPLEX_KNOWN_VALUES {
+            assert_almost_eq!(c_lngamma(values[0]), values[1], PRECISION);
+        }
+
+        for values in REAL_KNOWN_VALUES {
+            assert_almost_eq!(c_lngamma(values.0), values.1, PRECISION);
+        }
     }
 
     #[test]
@@ -378,55 +357,52 @@ mod tests {
                 })
             );
         }
-        // From Wolframalpha
-        assert_almost_eq!(
-            c_lgamma(Complex { re: 0.0, im: 1.0 }),
-            -0.6509231993018563388852168315,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex { re: 0.0, im: 2.0 }),
-            -2.56922596699087465064722769985,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex { re: 0.0, im: 3.0 }),
-            -4.342756588257865882968429589295,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex { re: 0.0, im: 4.0 }),
-            -6.057393954528778266207447521547,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex { re: 0.0, im: 5.0 }),
-            -7.739762056986849186171316767808,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex {
-                re: 0.001,
-                im: 0.001
-            }),
-            6.56060447383755263956515723187072,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex {
-                re: 1.0e-9,
-                im: 1.0e-9
-            }),
-            20.3766922460892228365517741716250487,
-            PRECISION
-        );
-        assert_almost_eq!(
-            c_lgamma(Complex {
-                re: 150.01,
-                im: 1.0e-20
-            }),
-            600.059543872337641753611684656568302,
-            PRECISION
-        );
+
+        const KNOWN_VALUES: [(Complex64, f64); 8] = [
+            (
+                Complex { re: 0.0, im: 1.0 },
+                -0.6509231993018563388852168315,
+            ),
+            (
+                Complex { re: 0.0, im: 2.0 },
+                -2.56922596699087465064722769985,
+            ),
+            (
+                Complex { re: 0.0, im: 3.0 },
+                -4.342756588257865882968429589295,
+            ),
+            (
+                Complex { re: 0.0, im: 4.0 },
+                -6.057393954528778266207447521547,
+            ),
+            (
+                Complex { re: 0.0, im: 5.0 },
+                -7.739762056986849186171316767808,
+            ),
+            (
+                Complex {
+                    re: 0.001,
+                    im: 0.001,
+                },
+                6.56060447383755263956515723187072,
+            ),
+            (
+                Complex {
+                    re: 1.0e-9,
+                    im: 1.0e-9,
+                },
+                20.3766922460892228365517741716250487,
+            ),
+            (
+                Complex {
+                    re: 150.01,
+                    im: 1.0e-20,
+                },
+                600.059543872337641753611684656568302,
+            ),
+        ];
+        for values in KNOWN_VALUES {
+            assert_almost_eq!(c_lgamma(values.0), values.1, PRECISION);
+        }
     }
 }
