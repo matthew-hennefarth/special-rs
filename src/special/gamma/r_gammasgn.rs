@@ -38,17 +38,14 @@ mod tests {
             assert_eq!(r_gammasgn(i as f32), 1.0);
             assert_eq!(r_gammasgn(i as f32 + 0.5), 1.0);
             assert_eq!(r_gammasgn(i as f32 + 0.25), 1.0);
-        }
-        // Should be negative
-        assert_eq!(r_gammasgn(-0.5), -1.0);
-        assert_eq!(r_gammasgn(-2.5), -1.0);
-        assert_eq!(r_gammasgn(-4.5), -1.0);
-        assert_eq!(r_gammasgn(-6.5), -1.0);
 
-        // Should be positive
-        assert_eq!(r_gammasgn(-1.5), 1.0);
-        assert_eq!(r_gammasgn(-3.5), 1.0);
-        assert_eq!(r_gammasgn(-5.5), 1.0);
-        assert_eq!(r_gammasgn(-7.5), 1.0);
+            let neg_even = -(2 * i) as f32;
+            assert_eq!(r_gammasgn(neg_even - 0.5), -1.0);
+            assert_eq!(r_gammasgn(neg_even - 0.25), -1.0);
+
+            let neg_odd = -(2 * i + 1) as f32;
+            assert_eq!(r_gammasgn(neg_odd - 0.5), 1.0);
+            assert_eq!(r_gammasgn(neg_odd - 0.25), 1.0);
+        }
     }
 }
