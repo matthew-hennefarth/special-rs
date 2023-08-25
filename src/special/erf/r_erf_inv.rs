@@ -272,19 +272,55 @@ where
 }
 
 #[cfg(test)]
-#[rustfmt::skip]
-mod tests{
+mod tests {
     use super::*;
-    
+
     const PRECISION: f64 = 1e-14;
 
     #[test]
     fn test_r_erf_inv() {
-        assert_almost_eq!(r_erf_inv(0.5), 0.4769362762044698733814, PRECISION); // OEIS: A069286
+        const ABSOLUTE_KNOWN_VALUES: [[f64; 2]; 2] = [[0.0, 0.0], [1.0, f64::INFINITY]];
+
+        const KNOWN_VALUES: [[f64; 2]; 9] = [
+            // From Wolframalpha unless otherwise specified
+            [0.1, 0.0888559904942576870157],
+            [0.2, 0.1791434546212916764927],
+            [0.3, 0.2724627147267543556219],
+            [0.4, 0.3708071585935579290582],
+            [0.5, 0.4769362762044698733814], // OEIS: A069286
+            [0.6, 0.5951160814499948500193],
+            [0.7, 0.7328690779592168522188],
+            [0.8, 0.9061938024368232200711],
+            [0.9, 1.1630871536766740867262],
+        ];
+        for values in ABSOLUTE_KNOWN_VALUES {
+            assert_eq!(r_erf_inv(values[0]), values[1]);
+            assert_eq!(r_erf_inv(-values[0]), -values[1]);
+        }
+        for values in KNOWN_VALUES {
+            assert_almost_eq!(r_erf_inv(values[0]), values[1], PRECISION);
+            assert_almost_eq!(r_erf_inv(-values[0]), -values[1], PRECISION);
+        }
     }
 
     #[test]
     fn test_r_erfc_inv() {
+        const KNOWN_VALUES: [[f64; 2]; 9] = [
+            // From Wolframalpha unless otherwise specified
+            [0.9, 0.0888559904942576870157],
+            [0.8, 0.1791434546212916764927],
+            [0.7, 0.2724627147267543556219],
+            [0.6, 0.3708071585935579290582],
+            [0.5, 0.4769362762044698733814], // OEIS: A069286
+            [0.4, 0.5951160814499948500193],
+            [0.3, 0.7328690779592168522188],
+            [0.2, 0.9061938024368232200711],
+            [0.1, 1.1630871536766740867262],
+        ];
 
+        for values in KNOWN_VALUES {
+            assert_almost_eq!(r_erfc_inv(values[0]), values[1], PRECISION);
+            assert_almost_eq!(r_erfc_inv(2.0 - values[0]), -values[1], PRECISION);
+        }
     }
 }
