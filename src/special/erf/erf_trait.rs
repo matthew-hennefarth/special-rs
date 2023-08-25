@@ -67,10 +67,36 @@ pub trait Erf {
     /// # Examples
     /// For real-valued inputs
     /// ```
-    /// todo!();
+    /// use sci_rs::special::Erf;
+    /// assert_eq!(1.0_f32.erf().erf_inv(), 1.0);
+    /// assert_eq!(0.5_f64.erf_inv().erf(), 0.5);
     /// ```
+    /// # Notes
+    /// The real-valued implementation is based on the [Boost] library (v 1.82.0) ([documentation](https://www.boost.org/doc/libs/1_82_0/libs/math/doc/html/math_toolkit/sf_erf/error_inv.html)).
+    ///
+    /// [comment]: <> (Reference hyperlinks)
+    /// [Boost]: https://www.boost.org/doc/libs/1_82_0/boost/math/special_functions/detail/erf_inv.hpp
     fn erf_inv(self) -> Self;
 
+    /// Inverse of the Complementary Error Function
+    /// $$
+    /// \mathrm{erfc}y = z
+    /// $$
+    /// Returns the value $y$ such that $\mathrm{erfc}y=1-\mathrm{erf}y = z$. The valid domain is $0 \leq z \leq 2$.
+    /// # Examples
+    /// For real-valued inputs
+    /// ```
+    /// use sci_rs::special::Erf;
+    /// assert_eq!(1.0_f32.erfc().erfc_inv(), 1.0);
+    /// assert_eq!(1.5_f64.erfc_inv().erfc(), 1.5);
+    /// assert_eq!(0.5_f32.erfc_inv(), 0.5_f32.erf_inv());
+    /// assert_eq!(0.2_f64.erfc_inv(), 0.8_f64.erf_inv());
+    /// ```
+    /// # Notes
+    /// The real-valued implementation is based on the [Boost] library (v 1.82.0) ([documentation](https://www.boost.org/doc/libs/1_82_0/libs/math/doc/html/math_toolkit/sf_erf/error_inv.html)).
+    ///
+    /// [comment]: <> (Reference hyperlinks)
+    /// [Boost]: https://www.boost.org/doc/libs/1_82_0/boost/math/special_functions/detail/erf_inv.hpp
     fn erfc_inv(self) -> Self;
 }
 
